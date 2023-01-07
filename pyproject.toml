@@ -1,0 +1,12 @@
+[tool.poetry]
+name = "discord_wireguard"
+version = "0.0.0"
+authors = ["Alex Massi"]
+description = ""
+readme = "README.md"
+license = "AGPL-3"
+
+[tool.poetry.dependencies]
+python = "3.10.8"
+hikari = "^2.0.0.dev115"
+
