@@ -112,6 +112,20 @@ server = ["pynacl (>=1.5,<2.0)"]
 speedups = ["aiohttp[speedups] (>=3.8,<4.0)", "ciso8601 (>=2.3,<3.0)"]
 
 [[package]]
+name = "hikari-lightbulb"
+version = "2.3.1"
+description = "A simple to use command handler for Hikari"
+category = "main"
+optional = false
+python-versions = ">=3.8.0,<3.12"
+
+[package.dependencies]
+hikari = ">=2.0.0.dev113,<2.1.0"
+
+[package.extras]
+crontrigger = ["croniter (>=1.3.8,<1.4.0)", "types-croniter (>=1.3.2,<1.4.0)"]
+
+[[package]]
 name = "idna"
 version = "3.4"
 description = "Internationalized Domain Names in Applications (IDNA)"
@@ -128,6 +142,14 @@ optional = false
 python-versions = ">=3.7"
 
 [[package]]
+name = "wgconfig"
+version = "0.3.0"
+description = "parsing and writing WireGuard configuration files"
+category = "main"
+optional = false
+python-versions = ">=2.7"
+
+[[package]]
 name = "yarl"
 version = "1.8.2"
 description = "Yet another URL library"
@@ -142,7 +164,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "3.10.8"
-content-hash = "d05a8b7dfecabd43f5130ef54280a93cc8cb6d1ae763bdeb4e1f1e02911fc113"
+content-hash = "703e6daae58544f92908e6d07199cd82e4ba9140b0b1b9cd2c52c58efb86490d"
 
 [metadata.files]
 aiohttp = [
@@ -338,6 +360,10 @@ hikari = [
     {file = "hikari-2.0.0.dev115-py3-none-any.whl", hash = "sha256:12f1e88aec53fd10acc876693b9a82b33e56569dadfb34c13d7b0b504a0a444c"},
     {file = "hikari-2.0.0.dev115.tar.gz", hash = "sha256:09165340aed16d1f9a702da50f577be0111bc8806d8486f712dfa559dcb29e4e"},
 ]
+hikari-lightbulb = [
+    {file = "hikari-lightbulb-2.3.1.tar.gz", hash = "sha256:59aab951c21c6f3d4eb808db5a6cafadf7b33320906c70987ad252e79c5c190b"},
+    {file = "hikari_lightbulb-2.3.1-py3-none-any.whl", hash = "sha256:c7e84181694eda33c66d2e227f73cdf618306d4e33ca248da901a5234d0bb393"},
+]
 idna = [
     {file = "idna-3.4-py3-none-any.whl", hash = "sha256:90b77e79eaa3eba6de819a0c442c0b4ceefc341a7a2ab77d7562bf49f425c5c2"},
     {file = "idna-3.4.tar.gz", hash = "sha256:814f528e8dead7d329833b91c5faa87d60bf71824cd12a7530b5526063d02cb4"},
@@ -417,6 +443,10 @@ multidict = [
     {file = "multidict-6.0.4-cp39-cp39-win32.whl", hash = "sha256:27c523fbfbdfd19c6867af7346332b62b586eed663887392cff78d614f9ec313"},
     {file = "multidict-6.0.4-cp39-cp39-win_amd64.whl", hash = "sha256:33029f5734336aa0d4c0384525da0387ef89148dc7191aae00ca5fb23d7aafc2"},
     {file = "multidict-6.0.4.tar.gz", hash = "sha256:3666906492efb76453c0e7b97f2cf459b0682e7402c0489a95484965dbc1da49"},
+]
+wgconfig = [
+    {file = "wgconfig-0.3.0-py3-none-any.whl", hash = "sha256:465828e5aa63d70c0d3100de01b394b705d40ae7c1ab65441d5e162ce9592deb"},
+    {file = "wgconfig-0.3.0.tar.gz", hash = "sha256:743bfb574548455459273ed3bbf2e2420c5edd289ee542b614bba31ea5c448d1"},
 ]
 yarl = [
     {file = "yarl-1.8.2-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:bb81f753c815f6b8e2ddd2eef3c855cf7da193b82396ac013c661aaa6cc6b0a5"},

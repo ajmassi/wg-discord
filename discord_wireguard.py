@@ -1,30 +1,35 @@
-# -*- coding: utf-8 -*-
-# Hikari Examples - A collection of examples for Hikari.
-#
-# To the extent possible under law, the author(s) have dedicated all copyright
-# and related and neighboring rights to this software to the public domain worldwide.
-# This software is distributed without any warranty.
-#
-# You should have received a copy of the CC0 Public Domain Dedication along with this software.
-# If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
-"""A simple bot with only a `!ping` command."""
-
+import binascii
+import lightbulb
+import base64
 import os
-
-import hikari
-
-bot = hikari.GatewayBot(token=os.environ["BOT_TOKEN"])
+import time
 
 
-@bot.listen()
-async def on_message(event: hikari.MessageCreateEvent) -> None:
-    """Listen for messages being created."""
-    if not event.is_human:
-        # Do not respond to bots or webhooks!
-        return
+bot = lightbulb.BotApp(token=os.environ["BOT_TOKEN"])
 
-    if event.content == "!ping":
-        await event.message.respond(f"Pong! {bot.heartbeat_latency * 1_000:.0f}ms")
+
+def validate_public_key(key):
+    # Best we can do here for input validation is check that our received key is a 32-byte string
+    if key is not None and len(base64.b64decode(key)) != 32:
+        raise ValueError("Provided value is not a valid Wireguard Public Key.")
+
+
+@bot.command()
+@lightbulb.option("key", "Your Wireguard Public Key")
+@lightbulb.command("register", "Register yourself with the Wireguard tunnel.")
+@lightbulb.implements(lightbulb.SlashCommand)
+async def echo(ctx: lightbulb.Context) -> None:
+    try:
+        validate_public_key(ctx.options.key)
+        await ctx.author.send(ctx.options.key)
+    except binascii.Error:
+        await ctx.author.send(f"ERROR: Invalid Wireguard Public Key")
+    except ValueError as e:
+        await ctx.author.send(f"ERROR: {e}")
+    finally:
+        await ctx.respond("Thanks for registering!\nReply sent to your DMs.")
+        time.sleep(5)
+        await ctx.delete_last_response()
 
 
 bot.run()
