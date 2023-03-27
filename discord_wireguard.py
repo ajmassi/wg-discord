@@ -8,16 +8,22 @@ import os
 import hikari
 import lightbulb
 import wgconfig
-from dotenv import load_dotenv
 
-load_dotenv()
+from config import conf
+
 log = logging.getLogger(__name__)
 bot = lightbulb.BotApp(
-    token=os.environ["BOT_TOKEN"],
+    token=conf.bot_token,
     intents=hikari.Intents.GUILD_MESSAGES | hikari.Intents.DM_MESSAGES,
 )
 wg_config = wgconfig.WGConfig("./wg0.conf")
 wg_config.read_file()
+
+
+class WgRegistrationError(Exception):
+    def __init(self, message):
+        self.message = message
+        super().__init__(self.message)
 
 
 async def get_available_ips():
@@ -43,13 +49,20 @@ async def get_available_ips():
     return set(network.hosts()) - reserved_ips - claimed_ips
 
 
-async def validate_public_key(key):
+async def validate_public_key(key: str) -> None:
     # Best we can do here for input validation is check that our received key is a 32-byte string
-    if key is not None and len(base64.b64decode(key)) != 32:
-        raise ValueError(f"Provided value [{key}] is not a valid WireGuard public key.")
+    try:
+        if key is not None and len(base64.b64decode(key)) != 32:
+            raise WgRegistrationError(
+                f"Provided value [{key}] is not a valid WireGuard public key."
+            )
+    except binascii.Error as e:
+        raise WgRegistrationError(f"Invalid WireGuard public key: {key}") from e
 
 
-async def process_wireguard_config(ctx, user_id, key):
+async def process_wireguard_config(
+    ctx: lightbulb.Context, user_id: str, key: str
+) -> None:
     config_created = False
 
     # Check if a different user already registered the provided key pair
@@ -62,8 +75,8 @@ async def process_wireguard_config(ctx, user_id, key):
                 await ctx.author.send("Your public key is already configured.")
                 config_created = True
             else:
-                await ctx.author.send(
-                    "ERROR: This key pair may already be in use, regenerate a new key pair and try again."
+                raise WgRegistrationError(
+                    "This key pair may already be in use, regenerate a new key pair and try again."
                 )
         else:
             # TODO work on error text, maybe also send alert to caller
@@ -99,15 +112,13 @@ async def echo(ctx: lightbulb.Context) -> None:
     try:
         await validate_public_key(ctx.options.key)
         await process_wireguard_config(ctx, ctx.user.id.__str__(), ctx.options.key)
-    except binascii.Error:
-        log.error(f"Invalid WireGuard public key: {ctx.options.key}")
-        await ctx.author.send("ERROR: Invalid WireGuard public key")
-    except ValueError as e:
+        log.info(
+            f"User [{ctx.user.id.__str__()}] registered successfully with key [{ctx.options.key}]"
+        )
+    except WgRegistrationError as e:
         log.error(e)
         await ctx.author.send(f"ERROR: {e}")
     finally:
-        # TODO context does not clear registration message when request sent in dms
-        log.info(f"User [{ctx.user.id.__str__()}] registered successfully with key [{ctx.options.key}]")
         await ctx.respond("Thanks for registering!\nReply sent to your DMs.")
         await asyncio.sleep(5)
         await ctx.delete_last_response()
