@@ -20,7 +20,7 @@ wg_config = wgconfig.WGConfig("./wg0.conf")
 wg_config.read_file()
 
 
-class WgRegistrationError(Exception):
+class KeyValidationError(Exception):
     def __init(self, message):
         self.message = message
         super().__init__(self.message)
@@ -53,11 +53,9 @@ async def validate_public_key(key: str) -> None:
     # Best we can do here for input validation is check that our received key is a 32-byte string
     try:
         if key is not None and len(base64.b64decode(key)) != 32:
-            raise WgRegistrationError(
-                f"Provided value [{key}] is not a valid WireGuard public key."
-            )
+            raise KeyValidationError(f"Invalid WireGuard public key \"{key}\"")
     except binascii.Error as e:
-        raise WgRegistrationError(f"Invalid WireGuard public key: {key}") from e
+        raise KeyValidationError(f"Invalid WireGuard public key \"{key}\"") from e
 
 
 async def process_wireguard_config(
@@ -75,12 +73,13 @@ async def process_wireguard_config(
                 await ctx.author.send("Your public key is already configured.")
                 config_created = True
             else:
-                raise WgRegistrationError(
-                    "This key pair may already be in use, regenerate a new key pair and try again."
+                log.warning(f"User \"{user_id}\" provided Key \"{key}\" that was already in use.")
+                await ctx.author.send(
+                    "ERROR: This key pair may already be in use, regenerate a new key pair and try again."
                 )
         else:
             # TODO work on error text, maybe also send alert to caller
-            log.info(
+            log.error(
                 "Config appears to be modified or created by a different tool, cannot update"
             )
     else:
@@ -110,13 +109,16 @@ async def process_wireguard_config(
 @lightbulb.implements(lightbulb.SlashCommand)
 async def echo(ctx: lightbulb.Context) -> None:
     try:
+        log.info(
+            f"User \"{ctx.user.id.__str__()}\" attempting to register with Key \"{ctx.options.key}\""
+        )
         await validate_public_key(ctx.options.key)
         await process_wireguard_config(ctx, ctx.user.id.__str__(), ctx.options.key)
         log.info(
-            f"User [{ctx.user.id.__str__()}] registered successfully with key [{ctx.options.key}]"
+            f"User \"{ctx.user.id.__str__()}\" registered successfully with Key \"{ctx.options.key}\""
         )
-    except WgRegistrationError as e:
-        log.error(e)
+    except KeyValidationError as e:
+        log.warning(f"User \"{ctx.user.id.__str__()}\" {e}")
         await ctx.author.send(f"ERROR: {e}")
     finally:
         await ctx.respond("Thanks for registering!\nReply sent to your DMs.")
