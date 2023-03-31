@@ -16,7 +16,7 @@ bot = lightbulb.BotApp(
     token=conf.bot_token,
     intents=hikari.Intents.GUILD_MESSAGES | hikari.Intents.DM_MESSAGES,
 )
-wg_config = wgconfig.WGConfig("./wg0.conf")
+wg_config = wgconfig.WGConfig(conf.wireguard_config_path)
 wg_config.read_file()
 
 
@@ -26,27 +26,29 @@ class KeyValidationError(Exception):
         super().__init__(self.message)
 
 
-async def get_available_ips():
-    network = set()
-    if os.getenv("GUILD_INTERFACE_ADDRESS"):
-        network = ipaddress.ip_network("GUILD_INTERFACE_ADDRESS")
-    else:
-        raise ValueError("GUILD_INTERFACE_ADDRESS is required")
+class ConfigGenError(Exception):
+    def __init(self, message):
+        self.message = message
+        super().__init__(self.message)
 
-    reserved_ips = set()
-    if os.getenv("GUILD_INTERFACE_RESERVED_NETWORK_ADDRESSES"):
-        for ip in os.getenv("GUILD_INTERFACE_RESERVED_NETWORK_ADDRESSES").split(","):
-            try:
-                reserved_ips.update([ipaddress.ip_address(ip.strip())])
-            except ValueError as e:
-                log.warning(f"Invalid IP address in config file: {e}")
+
+def get_available_ip() -> ipaddress.IPv4Address | ipaddress.IPv6Address:
+    """Calculates and returns an available IP address"""
+    reserved_ips = set().union(*[set(x) for x in conf.guild_interface_reserved_network_addresses])
 
     # Collect IPs defined in WireGuard conf
     claimed_ips = set()
     for _, v in wg_config.peers.items():
         claimed_ips.update(ipaddress.ip_network(v.get("AllowedIPs")).hosts())
 
-    return set(network.hosts()) - reserved_ips - claimed_ips
+    available_ips = set(conf.guild_interface_address.hosts()) - reserved_ips - claimed_ips
+
+    if not available_ips:
+        msg = "No IPs available!"
+        log.error(msg)
+        raise ConfigGenError(msg)
+
+    return available_ips.pop()
 
 
 async def validate_public_key(key: str) -> None:
@@ -58,49 +60,104 @@ async def validate_public_key(key: str) -> None:
         raise KeyValidationError(f"Invalid WireGuard public key \"{key}\"") from e
 
 
-async def process_wireguard_config(
+async def generate_user_config(user_id: str, user_address: ipaddress.IPv4Address | ipaddress.IPv6Address) -> None:
+    user_conf = wgconfig.WGConfig(os.path.join(conf.wireguard_user_config_dir, user_id))
+    user_conf.initialize_file()
+    user_conf.add_attr(None, 'PrivateKey', '<Copy Private Key Here>')
+    user_conf.add_attr(None, 'Address', user_address)
+    user_conf.add_attr(None, 'ListenPort', conf.guild_interface_listen_port)
+
+    user_conf.add_peer(conf.guild_public_key)
+    user_conf.add_attr(
+        conf.guild_public_key,
+        "AllowedIPs",
+        ','.join(map(str, conf.user_allowed_ips)),
+    )
+    user_conf.add_attr(
+        conf.guild_public_key,
+        "Endpoint",
+        conf.user_endpoint,
+    )
+
+    user_conf.write_file()
+    log.info(f"Wrote conf file for {user_id}")
+
+
+async def verify_registered_key(ctx: lightbulb.Context, user_id: str, key: str) -> bool:
+    """
+    Verify that a registered key belongs to the requesting user.
+    We don't want a user to be able to take over an existing connection.
+
+    :param ctx:
+    :param user_id:
+    :param key:
+    :return bool:
+    """
+    if (peer_id := wg_config.get_peer(key, include_details=True).get("_rawdata")[0]) and peer_id.startswith("#"):
+        if peer_id[1::] == user_id:
+            await ctx.author.send("Your public key is already configured.")
+            return True
+        else:
+            log.warning(f"User \"{user_id}\" provided Key \"{key}\" that was already in use.")
+            await ctx.author.send("ERROR: Key pair may already be in use, regenerate a new key pair and try again.")
+    else:
+        log.error(f"Unable to parse config for user {user_id}, config may have been modified by a different tool.")
+
+    return False
+
+
+async def process_registration(
     ctx: lightbulb.Context, user_id: str, key: str
 ) -> None:
-    config_created = False
+    """
+    Updates Guild's Wireguard config for valid user requests, and creates/sends User Wireguard config if possible.
 
-    # Check if a different user already registered the provided key pair
-    #  The intent is that we don't want a user to be able to take over an existing connection
+    :param ctx:
+    :param user_id:
+    :param key:
+    :return None:
+    """
     if key in wg_config.peers:
-        if (
-            peer_id := wg_config.get_peer(key, include_details=True).get("_rawdata")[0]
-        ) and peer_id.startswith("#"):
-            if peer_id[1::] == user_id:
-                await ctx.author.send("Your public key is already configured.")
-                config_created = True
-            else:
-                log.warning(f"User \"{user_id}\" provided Key \"{key}\" that was already in use.")
-                await ctx.author.send(
-                    "ERROR: This key pair may already be in use, regenerate a new key pair and try again."
-                )
-        else:
-            # TODO work on error text, maybe also send alert to caller
-            log.error(
-                "Config appears to be modified or created by a different tool, cannot update"
-            )
+        key_is_approved = await verify_registered_key(ctx, user_id, key)
     else:
-        # If the wg key is not already in use, check for and remove previous user configuration and create new one
-        for k, v in wg_config.peers.items():
-            if v.get("_rawdata")[0] == user_id:
-                wg_config.del_peer(k)
+        # Remove previous user peer configuration and create new one
+        #   Don't necessarily need this if a robust timeout was implemented for keys, but this does prevent clutter
+        for peer_entry, peer_conf in wg_config.peers.items():
+            if peer_conf.get("_rawdata")[0][1::] == user_id:
+                wg_config.del_peer(peer_entry)
                 break
+
+        try:
+            user_address = get_available_ip()
+        except ConfigGenError as e:
+            await ctx.author.send(f"Error during WireGuard Config generation, notify server admin: {e}")
+            return
 
         wg_config.add_peer(key, f"#{user_id}")
         wg_config.add_attr(
             key,
             "Endpoint",
-            "wg.example.com:51820",
-            "# Added for demonstration purposes",
+            conf.user_endpoint,
+        )
+        wg_config.add_attr(
+            key,
+            "AllowedIPs",
+            ipaddress.ip_network(user_address),
         )
 
-        config_created = True
+        wg_config.write_file()
 
-    if config_created:
-        await ctx.author.send("Your client config: <#TODO>")
+        await generate_user_config(user_id, user_address)
+        key_is_approved = True
+
+    if key_is_approved:
+        await ctx.author.send("Your client config:")
+        try:
+            with open(f"./{user_id}") as f:
+                await ctx.author.send(f.read())
+        except PermissionError as e:
+            wg_config.del_peer(key)
+            log.error(e)
 
 
 @bot.command()
@@ -113,7 +170,7 @@ async def echo(ctx: lightbulb.Context) -> None:
             f"User \"{ctx.user.id.__str__()}\" attempting to register with Key \"{ctx.options.key}\""
         )
         await validate_public_key(ctx.options.key)
-        await process_wireguard_config(ctx, ctx.user.id.__str__(), ctx.options.key)
+        await process_registration(ctx, ctx.user.id.__str__(), ctx.options.key)
         log.info(
             f"User \"{ctx.user.id.__str__()}\" registered successfully with Key \"{ctx.options.key}\""
         )
