@@ -62,6 +62,12 @@ async def validate_public_key(key: str) -> None:
 
 async def generate_user_config(user_id: str, user_address: ipaddress.IPv4Address | ipaddress.IPv6Address) -> None:
     user_conf = wgconfig.WGConfig(os.path.join(conf.wireguard_user_config_dir, user_id))
+
+    try:
+        user_conf = wgconfig.WGConfig(os.path.join(conf.wireguard_user_config_dir, user_id))
+    except PermissionError as e:
+        raise e
+
     user_conf.initialize_file()
     user_conf.add_attr(None, 'PrivateKey', '<Copy Private Key Here>')
     user_conf.add_attr(None, 'Address', user_address)
@@ -147,16 +153,23 @@ async def process_registration(
 
         wg_config.write_file()
 
-        await generate_user_config(user_id, user_address)
+        try:
+            await generate_user_config(user_id, user_address)
+        except PermissionError as e:
+            await ctx.author.send("ERROR: Unable to retrieve your configuration.")
+            log.error(e)
+            return
+
         key_is_approved = True
 
     if key_is_approved:
         await ctx.author.send("Your client config:")
         try:
-            with open(f"./{user_id}") as f:
+            with open(os.path.join(conf.wireguard_user_config_dir, user_id)) as f:
                 await ctx.author.send(f.read())
         except PermissionError as e:
             wg_config.del_peer(key)
+            await ctx.author.send("ERROR: Unable to retrieve your configuration.")
             log.error(e)
 
 
