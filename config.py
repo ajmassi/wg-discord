@@ -4,7 +4,14 @@ import ipaddress
 import logging
 from typing import Any, List, Optional
 
-from pydantic import BaseSettings, Field, IPvAnyNetwork, DirectoryPath, FilePath, validator
+from pydantic import (
+    BaseSettings,
+    DirectoryPath,
+    Field,
+    FilePath,
+    IPvAnyNetwork,
+    validator,
+)
 
 log = logging.getLogger(__name__)
 
@@ -40,21 +47,19 @@ class WireGuardSettings(BaseSettings):
     # TODO user_persistent_keep_alive:
 
     @validator("guild_private_key", "guild_public_key")
-    def check_key(cls, key: str) -> str:
+    def check_key(cls, key: str) -> str:  # noqa: B902
         try:
             if len(base64.b64decode(key)) == 32:
                 return key
             else:
-                raise ValueError(
-                    f"Invalid WireGuard key {key}, unable to start."
-                )
+                raise ValueError(f"Invalid WireGuard key {key}, unable to start.")
         except binascii.Error:
-            raise ValueError(
+            raise ValueError(  # noqa: B904
                 f"Invalid WireGuard key {key}, unable to start."
             )
 
     @validator("user_endpoint")
-    def check_endpoint(cls, endpoint: str) -> str:
+    def check_endpoint(cls, endpoint: str) -> str:  # noqa: B902
         tokens = endpoint.split(":", 1)
         if 0 < int(tokens[1]) <= 65535:
             return endpoint
