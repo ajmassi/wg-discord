@@ -32,8 +32,12 @@ class ConfigGenError(Exception):
         super().__init__(self.message)
 
 
-def get_available_ip() -> ipaddress.IPv4Address | ipaddress.IPv6Address:
-    """Calculates and returns an available IP address"""
+def get_an_available_ip() -> ipaddress.IPv4Address | ipaddress.IPv6Address:
+    """
+    Calculates and returns an available IP address.
+
+    :return ipaddress.IPv4Address | ipaddress.IPv6Address: Unclaimed ip address
+    """
     reserved_ips = set().union(
         *[set(x) for x in conf.guild_interface_reserved_network_addresses]
     )
@@ -56,7 +60,12 @@ def get_available_ip() -> ipaddress.IPv4Address | ipaddress.IPv6Address:
 
 
 async def validate_public_key(key: str) -> None:
-    # Best we can do here for input validation is check that our received key is a 32-byte string
+    """
+    Check key decodes and is of expected length for a WireGuard key (32 bytes).
+
+    :param key: Requested WireGuard key for the user
+    :return:
+    """
     try:
         if key is not None and len(base64.b64decode(key)) != 32:
             raise KeyValidationError(f'Invalid WireGuard public key "{key}"')
@@ -67,6 +76,13 @@ async def validate_public_key(key: str) -> None:
 async def generate_user_config(
     user_id: str, user_address: ipaddress.IPv4Address | ipaddress.IPv6Address
 ) -> None:
+    """
+    Creates config file for the user to connect to the Guild endpoint.
+
+    :param user_id: Requesting Discord user's UUID
+    :param user_address: IP address assigned to the user
+    :return None:
+    """
     try:
         user_conf = wgconfig.WGConfig(
             os.path.join(conf.wireguard_user_config_dir, user_id)
@@ -94,9 +110,9 @@ async def verify_registered_key(ctx: lightbulb.Context, user_id: str, key: str) 
     Verify that a registered key belongs to the requesting user.
     We don't want a user to be able to take over an existing connection.
 
-    :param ctx:
-    :param user_id:
-    :param key:
+    :param ctx: Discord context used to send messages to user
+    :param user_id: Requesting Discord user's UUID
+    :param key: Requested WireGuard key for the user
     :return bool:
     """
     if (
@@ -124,9 +140,9 @@ async def process_registration(ctx: lightbulb.Context, user_id: str, key: str) -
     """
     Updates Guild's Wireguard config for valid user requests, and creates/sends User Wireguard config if possible.
 
-    :param ctx:
-    :param user_id:
-    :param key:
+    :param ctx: Discord context used to send messages to user
+    :param user_id: Requesting Discord user's UUID
+    :param key: Requested WireGuard key for the user
     :return None:
     """
     if key in wg_config.peers:
@@ -140,7 +156,7 @@ async def process_registration(ctx: lightbulb.Context, user_id: str, key: str) -
                 break
 
         try:
-            user_address = get_available_ip()
+            user_address = get_an_available_ip()
         except ConfigGenError as e:
             await ctx.author.send(
                 f"Error during WireGuard Config generation, notify server admin: {e}"
@@ -178,6 +194,12 @@ async def process_registration(ctx: lightbulb.Context, user_id: str, key: str) -
 @lightbulb.command("register", "Register yourself with the WireGuard tunnel.")
 @lightbulb.implements(lightbulb.SlashCommand)
 async def echo(ctx: lightbulb.Context) -> None:
+    """
+    Discord Bot command that takes a WireGuard public key and creates configuration file(s) to enable a connection.
+
+    :param ctx: Discord context containing a Wireguard key
+    :return None:
+    """
     try:
         log.info(
             f'User "{ctx.user.id.__str__()}" attempting to register with Key "{ctx.options.key}"'
