@@ -1,8 +1,10 @@
+import base64
+import binascii
 import ipaddress
 import logging
 from typing import Any, List, Optional
 
-from pydantic import BaseSettings, Field, IPvAnyNetwork, validator
+from pydantic import BaseSettings, Field, IPvAnyNetwork, DirectoryPath, FilePath, validator
 
 log = logging.getLogger(__name__)
 
@@ -13,6 +15,10 @@ class WireGuardSettings(BaseSettings):
 
     # Discord Guild/Server WireGuard vars
     # Required
+    wireguard_config_path: FilePath
+    wireguard_user_config_dir: DirectoryPath
+    guild_private_key: str = Field(..., min_length=44, max_length=44)
+    guild_public_key: str = Field(..., min_length=44, max_length=44)
     guild_interface_address: IPvAnyNetwork = Field(...)
     guild_interface_listen_port: int = Field(..., ge=1, le=65535)
     # Optional
@@ -33,11 +39,24 @@ class WireGuardSettings(BaseSettings):
     # Optional
     # TODO user_persistent_keep_alive:
 
+    @validator("guild_private_key", "guild_public_key")
+    def check_key(cls, key: str) -> str:
+        try:
+            if len(base64.b64decode(key)) == 32:
+                return key
+            else:
+                raise ValueError(
+                    f"Invalid WireGuard key {key}, unable to start."
+                )
+        except binascii.Error:
+            raise ValueError(
+                f"Invalid WireGuard key {key}, unable to start."
+            )
+
     @validator("user_endpoint")
-    @classmethod
-    def endpoint_check(cls, endpoint: str) -> str:
-        tokens = endpoint.split(":")
-        if len(tokens) == 2 and 0 < int(tokens[1]) <= 65535:
+    def check_endpoint(cls, endpoint: str) -> str:
+        tokens = endpoint.split(":", 1)
+        if 0 < int(tokens[1]) <= 65535:
             return endpoint
         else:
             raise ValueError(
