@@ -9,6 +9,7 @@ import hikari
 import lightbulb
 import wgconfig
 
+import wg_control
 from config import conf
 
 log = logging.getLogger(__name__)
@@ -179,6 +180,7 @@ async def process_registration(ctx: lightbulb.Context, user_id: str, key: str) -
         key_is_approved = True
 
     if key_is_approved:
+        wg_control.hot_reload_wgconf()
         await ctx.author.send("Your client config:")
         try:
             with open(os.path.join(conf.wireguard_user_config_dir, user_id)) as f:
