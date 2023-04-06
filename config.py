@@ -91,8 +91,8 @@ class WireGuardSettings(BaseSettings):
                 # Cast each list member and create list of valid IPs
                 return [
                     ip
-                    for raw_ip in raw_val.split(",")
-                    if (ip := cls.cast_ip(raw_ip)) is not None
+                    for raw_ip in raw_val.strip().split(",")
+                    if (ip := cls.cast_ip(raw_ip.strip())) is not None
                 ]
             return cls.json_loads(raw_val)
 
