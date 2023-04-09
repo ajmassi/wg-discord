@@ -2,6 +2,7 @@ import base64
 import binascii
 import ipaddress
 import logging
+import shlex
 from typing import Any, List, Optional
 
 from pydantic import (
@@ -12,6 +13,7 @@ from pydantic import (
     IPvAnyNetwork,
     validator,
 )
+from pydantic.fields import ModelField
 
 log = logging.getLogger(__name__)
 
@@ -45,6 +47,12 @@ class WireGuardSettings(BaseSettings):
     user_allowed_ips: List[IPvAnyNetwork]
     # Optional
     # TODO user_persistent_keep_alive:
+
+    @validator("*")
+    def shell_safe(cls, v: Any, field: ModelField) -> Any:  # noqa: B902
+        if field.type_ is str:
+            return shlex.quote(v)
+        return v
 
     @validator("guild_private_key", "guild_public_key")
     def check_key(cls, key: str) -> str:  # noqa: B902
@@ -91,8 +99,8 @@ class WireGuardSettings(BaseSettings):
                 # Cast each list member and create list of valid IPs
                 return [
                     ip
-                    for raw_ip in raw_val.split(",")
-                    if (ip := cls.cast_ip(raw_ip)) is not None
+                    for raw_ip in raw_val.strip().split(",")
+                    if (ip := cls.cast_ip(raw_ip.strip())) is not None
                 ]
             return cls.json_loads(raw_val)
 

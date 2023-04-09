@@ -9,6 +9,7 @@ import hikari
 import lightbulb
 import wgconfig
 
+import wg_control
 from config import conf
 
 log = logging.getLogger(__name__)
@@ -83,17 +84,13 @@ async def generate_user_config(
     :param user_address: IP address assigned to the user
     :return None:
     """
+    wg_conf_filepath = os.path.join(conf.wireguard_user_config_dir, user_id)
     try:
-        user_conf = wgconfig.WGConfig(
-            os.path.join(conf.wireguard_user_config_dir, user_id)
-        )
+        user_conf = wgconfig.WGConfig(wg_conf_filepath)
     except PermissionError as e:
         raise e
 
-    user_conf.initialize_file()
-    user_conf.add_attr(None, "PrivateKey", "<Copy Private Key Here>")
     user_conf.add_attr(None, "Address", user_address)
-    user_conf.add_attr(None, "ListenPort", conf.guild_interface_listen_port)
 
     user_conf.add_peer(conf.guild_public_key)
     user_conf.add_attr(
@@ -102,6 +99,11 @@ async def generate_user_config(
     user_conf.add_attr(conf.guild_public_key, "Endpoint", conf.user_endpoint)
 
     user_conf.write_file()
+    # Remove leading "[Interface]" line
+    with open(wg_conf_filepath, "r") as wg:
+        contents = wg.read().splitlines(True)
+    with open(wg_conf_filepath, "w") as wg:
+        wg.writelines(contents[1:])
     log.info(f"Wrote conf file for {user_id}")
 
 
@@ -164,7 +166,6 @@ async def process_registration(ctx: lightbulb.Context, user_id: str, key: str) -
             return
 
         wg_config.add_peer(key, f"#{user_id}")
-        wg_config.add_attr(key, "Endpoint", conf.user_endpoint)
         wg_config.add_attr(key, "AllowedIPs", ipaddress.ip_network(user_address))
 
         wg_config.write_file()
@@ -179,7 +180,10 @@ async def process_registration(ctx: lightbulb.Context, user_id: str, key: str) -
         key_is_approved = True
 
     if key_is_approved:
-        await ctx.author.send("Your client config:")
+        wg_control.hot_reload_wgconf()
+        await ctx.author.send(
+            "Add the following lines to your tunnel config below your [Interface]'s PrivateKey:"
+        )
         try:
             with open(os.path.join(conf.wireguard_user_config_dir, user_id)) as f:
                 await ctx.author.send(f.read())
