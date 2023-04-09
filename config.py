@@ -49,7 +49,7 @@ class WireGuardSettings(BaseSettings):
     # TODO user_persistent_keep_alive:
 
     @validator("*")
-    def shell_safe(cls, v: Any, field: ModelField) -> Any:
+    def shell_safe(cls, v: Any, field: ModelField) -> Any:  # noqa: B902
         if field.type_ is str:
             return shlex.quote(v)
         return v

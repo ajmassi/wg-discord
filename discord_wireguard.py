@@ -100,9 +100,9 @@ async def generate_user_config(
 
     user_conf.write_file()
     # Remove leading "[Interface]" line
-    with open(wg_conf_filepath, 'r') as wg:
+    with open(wg_conf_filepath, "r") as wg:
         contents = wg.read().splitlines(True)
-    with open(wg_conf_filepath, 'w') as wg:
+    with open(wg_conf_filepath, "w") as wg:
         wg.writelines(contents[1:])
     log.info(f"Wrote conf file for {user_id}")
 
@@ -181,7 +181,9 @@ async def process_registration(ctx: lightbulb.Context, user_id: str, key: str) -
 
     if key_is_approved:
         wg_control.hot_reload_wgconf()
-        await ctx.author.send("Add the following lines to your tunnel config below your [Interface]'s PrivateKey:")
+        await ctx.author.send(
+            "Add the following lines to your tunnel config below your [Interface]'s PrivateKey:"
+        )
         try:
             with open(os.path.join(conf.wireguard_user_config_dir, user_id)) as f:
                 await ctx.author.send(f.read())
