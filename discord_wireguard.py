@@ -182,7 +182,7 @@ async def process_registration(ctx: lightbulb.Context, user_id: str, key: str) -
         key_is_approved = True
 
     if key_is_approved:
-        wg_control.hot_reload_wgconf()
+        wg_control.hot_reload_wgconf(conf.wireguard_config_path)
         await ctx.author.send(
             "Add the following lines to your tunnel config below your [Interface]'s PrivateKey:"
         )
