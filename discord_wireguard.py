@@ -10,7 +10,9 @@ import lightbulb
 import wgconfig
 
 import wg_control
-from config import conf
+from config import WireGuardSettings
+
+conf = WireGuardSettings()
 
 log = logging.getLogger(__name__)
 bot = lightbulb.BotApp(
