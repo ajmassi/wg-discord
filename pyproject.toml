@@ -11,7 +11,7 @@ line-length = 88
 skip-magic-trailing-comma = true
 
 [tool.bandit]
-exclude_dirs = [".venv"]
+exclude_dirs = [".venv", "tests"]
 
 [tool.poetry]
 name = "discord_wireguard"
