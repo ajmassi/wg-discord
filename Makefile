@@ -7,10 +7,7 @@ isort:
 
 flake8:
 	$(info ---------- FLAKE8 ----------)
-	poetry run flake8 . --exclude=.pytest_cache,.github,.venv \
-	    --count --select=B,C,E,F,W,T4,B9 --max-complexity=18 \
-	    --ignore=B950,E402,E203,E266,E501,W503,F403,F401 \
-	    --show-source --statistics
+	poetry run flake8 . 
 
 black:
 	$(info ---------- BLACK ----------)
