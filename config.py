@@ -49,7 +49,7 @@ class WireGuardSettings(BaseSettings):
     # TODO user_persistent_keep_alive:
 
     @validator("guild_save_config", pre=True)
-    def cover_guild_save_config_empty(cls, v):
+    def cover_guild_save_config_empty(cls, v):  # noqa: B902
         if str(v).lower() != "true":
             return False
         return v
