@@ -28,7 +28,9 @@ base_env = {
     "",
     None,
     False,
-    "FaLsE"
+    "FaLsE",
+    "kajsbfjkabskfjbs",
+    1241
 ])
 def test_false_guild_save_config(value):
     test_env = base_env
@@ -42,6 +44,7 @@ def test_false_guild_save_config(value):
 @pytest.mark.parametrize('value', [
     "True",
     "true",
+    "TrUe",
     True
 ])
 def test_true_guild_save_config(value):

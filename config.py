@@ -50,7 +50,7 @@ class WireGuardSettings(BaseSettings):
 
     @validator("guild_save_config", pre=True)
     def cover_guild_save_config_empty(cls, v):
-        if str(v).lower() == "false" or v in {"", None}:
+        if str(v).lower() != "true":
             return False
         return v
 
