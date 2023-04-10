@@ -11,7 +11,7 @@ line-length = 88
 skip-magic-trailing-comma = true
 
 [tool.bandit]
-exclude_dirs = [".venv"]
+exclude_dirs = [".venv", ".nox", "tests"]
 
 [tool.poetry]
 name = "discord_wireguard"
@@ -22,7 +22,7 @@ readme = "README.md"
 license = "AGPL-3"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = ">=3.11,<3.12"
 hikari = "^2.0.0.dev115"
 hikari-lightbulb = "^2.3.1"
 wgconfig = "^0.3.0"
@@ -38,3 +38,4 @@ flake8-deprecated = "^2.0.1"
 flake8-executable = "^2.1.2"
 bandit = {extras = ["toml"], version = "^1.7.4"}
 isort = "^5.11.4"
+nox = "^2022.11.21"
