@@ -18,4 +18,4 @@ black:
 
 bandit:
 	$(info ---------- BANDIT ----------)
-	poetry run bandit -c "pyproject.toml" --recursive .
+	poetry run bandit -c "pyproject.toml" --exclude */test_*.py --recursive .
