@@ -31,7 +31,7 @@ class WireGuardSettings(BaseSettings):
     guild_interface_address: IPvAnyNetwork = Field(...)
     guild_interface_listen_port: int = Field(..., ge=1, le=65535)
     # Optional
-    guild_save_config: Optional[bool] = Field(False)
+    guild_save_config: bool = Field(default=False)
     guild_interface_reserved_network_addresses: Optional[List[IPvAnyNetwork]]
     guild_interface_dns: Optional[List[IPvAnyNetwork]]
     # TODO guild_interface_table:
@@ -47,6 +47,12 @@ class WireGuardSettings(BaseSettings):
     user_allowed_ips: List[IPvAnyNetwork]
     # Optional
     # TODO user_persistent_keep_alive:
+
+    @validator("guild_save_config", pre=True)
+    def cover_guild_save_config_empty(cls, v):
+        if str(v).lower() != "true":
+            return False
+        return v
 
     @validator("*")
     def shell_safe(cls, v: Any, field: ModelField) -> Any:  # noqa: B902
@@ -108,6 +114,3 @@ class WireGuardSettings(BaseSettings):
         case_sensitive = False
         env_file = ".env"
         env_file_encoding = "utf-8"
-
-
-conf = WireGuardSettings()

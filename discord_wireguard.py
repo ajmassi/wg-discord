@@ -10,7 +10,9 @@ import lightbulb
 import wgconfig
 
 import wg_control
-from config import conf
+from config import WireGuardSettings
+
+conf = WireGuardSettings()
 
 log = logging.getLogger(__name__)
 bot = lightbulb.BotApp(
@@ -180,7 +182,7 @@ async def process_registration(ctx: lightbulb.Context, user_id: str, key: str) -
         key_is_approved = True
 
     if key_is_approved:
-        wg_control.hot_reload_wgconf()
+        wg_control.hot_reload_wgconf(conf.wireguard_config_path)
         await ctx.author.send(
             "Add the following lines to your tunnel config below your [Interface]'s PrivateKey:"
         )
