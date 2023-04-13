@@ -24,8 +24,8 @@ class WireGuardSettings(BaseSettings):
 
     # Discord Guild/Server WireGuard vars
     # Required
-    wireguard_config_path: FilePath
-    wireguard_user_config_dir: DirectoryPath
+    wireguard_config_path: str
+    wireguard_user_config_dir: str
     guild_private_key: str = Field(..., min_length=44, max_length=44)
     guild_public_key: str = Field(..., min_length=44, max_length=44)
     guild_interface_address: IPvAnyNetwork = Field(...)
@@ -49,7 +49,7 @@ class WireGuardSettings(BaseSettings):
     # TODO user_persistent_keep_alive:
 
     @validator("guild_save_config", pre=True)
-    def cover_guild_save_config_empty(cls, v):
+    def cover_guild_save_config_empty(cls, v):  # noqa: B902
         if str(v).lower() != "true":
             return False
         return v
@@ -112,5 +112,8 @@ class WireGuardSettings(BaseSettings):
 
         env_prefix = ""
         case_sensitive = False
-        env_file = ".env"
+        env_file = "../../.env"
         env_file_encoding = "utf-8"
+
+
+conf = WireGuardSettings()
