@@ -68,7 +68,9 @@ class TunnelManager:
 
         user_conf.add_peer(conf.guild_public_key)
         user_conf.add_attr(
-            conf.guild_public_key, "AllowedIPs", ",".join(map(str, conf.user_allowed_ips))
+            conf.guild_public_key,
+            "AllowedIPs",
+            ",".join(map(str, conf.user_allowed_ips)),
         )
         user_conf.add_attr(conf.guild_public_key, "Endpoint", conf.user_endpoint)
 
@@ -80,7 +82,9 @@ class TunnelManager:
             wg.writelines(contents[1:])
         log.info(f"Wrote conf file for {user_id}")
 
-    async def verify_registered_key(self, ctx: lightbulb.Context, user_id: str, key: str) -> bool:
+    async def verify_registered_key(
+        self, ctx: lightbulb.Context, user_id: str, key: str
+    ) -> bool:
         """
         Verify that a registered key belongs to the requesting user.
         We don't want a user to be able to take over an existing connection.
@@ -91,7 +95,9 @@ class TunnelManager:
         :return bool:
         """
         if (
-            peer_id := self.wg_config.get_peer(key, include_details=True).get("_rawdata")[0]
+            peer_id := self.wg_config.get_peer(key, include_details=True).get(
+                "_rawdata"
+            )[0]
         ) and peer_id.startswith("#"):
             if peer_id[1::] == user_id:
                 await ctx.author.send("Your public key is already configured.")
@@ -110,7 +116,9 @@ class TunnelManager:
 
         return False
 
-    async def process_registration(self, ctx: lightbulb.Context, user_id: str, key: str) -> None:
+    async def process_registration(
+        self, ctx: lightbulb.Context, user_id: str, key: str
+    ) -> None:
         """
         Updates Guild's Wireguard config for valid user requests, and creates/sends User Wireguard config if possible.
 
@@ -138,7 +146,9 @@ class TunnelManager:
                 return
 
             self.wg_config.add_peer(key, f"#{user_id}")
-            self.wg_config.add_attr(key, "AllowedIPs", ipaddress.ip_network(user_address))
+            self.wg_config.add_attr(
+                key, "AllowedIPs", ipaddress.ip_network(user_address)
+            )
 
             self.wg_config.write_file()
 
