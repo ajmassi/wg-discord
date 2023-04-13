@@ -1,0 +1,16 @@
+version: '3'
+name: wg-discord
+services:
+  discord-wireguard:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    cap_add:
+      - NET_ADMIN
+    env_file:
+      - .env
+    volumes:
+      - discord-wireguard-volume:/etc/wireguard
+
+volumes:
+  discord-wireguard-volume:
