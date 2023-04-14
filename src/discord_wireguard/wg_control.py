@@ -16,7 +16,7 @@ def initialize_wireguard_config():
         raise e
 
     guild_conf.initialize_file()
-    guild_conf.add_attr(None, "Address", conf.guild_interface_address)
+    guild_conf.add_attr(None, "Address", conf.guild_interface_address.ip)
     guild_conf.add_attr(None, "ListenPort", conf.guild_interface_listen_port)
     guild_conf.add_attr(None, "PrivateKey", conf.guild_private_key)
     # if conf.guild_interface_dns:
@@ -27,12 +27,12 @@ def initialize_wireguard_config():
     #     guild_conf.add_attr(None, "MTU", conf.guild_interface_mtu)
     # if conf.guild_pre_up and conf.guild_pre_up != "":
     #     guild_conf.add_attr(None, "PreUp", conf.guild_pre_up)
-    # if conf.guild_post_up and conf.guild_post_up != "":
-    #     guild_conf.add_attr(None, "PostUp", conf.guild_post_up)
+    if conf.guild_post_up and conf.guild_post_up != "":
+        guild_conf.add_attr(None, "PostUp", conf.guild_post_up[1:-1])
     # if conf.guild_pre_down and conf.guild_pre_down != "":
     #     guild_conf.add_attr(None, "PreDown", conf.guild_pre_down)
-    # if conf.guild_post_down and conf.guild_post_down != "":
-    #     guild_conf.add_attr(None, "PostDown", conf.guild_post_down)
+    if conf.guild_post_down and conf.guild_post_down != "":
+        guild_conf.add_attr(None, "PostDown", conf.guild_post_down[1:-1])
 
     guild_conf.write_file()
 
@@ -40,6 +40,17 @@ def initialize_wireguard_config():
 def start_wireguard():
     conf_file = os.path.basename(os.path.splitext(conf.wireguard_config_path)[0])
     proc_str = "wg-quick up {0}".format(shlex.quote(conf_file))
+    try:
+        subprocess.run(  # nosec B602
+            proc_str, shell=True, executable="/bin/bash", check=True
+        )
+    except subprocess.CalledProcessError as e:
+        print(e)
+
+
+def stop_wireguard():
+    conf_file = os.path.basename(os.path.splitext(conf.wireguard_config_path)[0])
+    proc_str = "wg-quick down {0}".format(shlex.quote(conf_file))
     try:
         subprocess.run(  # nosec B602
             proc_str, shell=True, executable="/bin/bash", check=True

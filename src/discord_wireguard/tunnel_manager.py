@@ -38,7 +38,9 @@ class TunnelManager:
             claimed_ips.update(ipaddress.ip_network(v.get("AllowedIPs")).hosts())
 
         available_ips = (
-            set(conf.guild_interface_address.hosts()) - reserved_ips - claimed_ips
+            set(conf.guild_interface_address.network.hosts())
+            - reserved_ips
+            - claimed_ips
         )
 
         if not available_ips:

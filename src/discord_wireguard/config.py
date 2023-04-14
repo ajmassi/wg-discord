@@ -5,14 +5,7 @@ import logging
 import shlex
 from typing import Any, List, Optional
 
-from pydantic import (
-    BaseSettings,
-    DirectoryPath,
-    Field,
-    FilePath,
-    IPvAnyNetwork,
-    validator,
-)
+from pydantic import BaseSettings, Field, IPvAnyInterface, IPvAnyNetwork, validator
 from pydantic.fields import ModelField
 
 log = logging.getLogger(__name__)
@@ -28,7 +21,7 @@ class WireGuardSettings(BaseSettings):
     wireguard_user_config_dir: str
     guild_private_key: str = Field(..., min_length=44, max_length=44)
     guild_public_key: str = Field(..., min_length=44, max_length=44)
-    guild_interface_address: IPvAnyNetwork = Field(...)
+    guild_interface_address: IPvAnyInterface = Field(...)
     guild_interface_listen_port: int = Field(..., ge=1, le=65535)
     # Optional
     guild_save_config: bool = Field(default=False)
@@ -112,7 +105,7 @@ class WireGuardSettings(BaseSettings):
 
         env_prefix = ""
         case_sensitive = False
-        env_file = "../../.env"
+        env_file = ".env"
         env_file_encoding = "utf-8"
 
 

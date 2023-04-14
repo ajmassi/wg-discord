@@ -2,6 +2,7 @@ import asyncio
 import base64
 import binascii
 import logging
+import sys
 from pathlib import Path
 
 import hikari
@@ -9,7 +10,11 @@ import lightbulb
 
 from discord_wireguard import tunnel_manager
 from discord_wireguard.config import conf
-from discord_wireguard.wg_control import initialize_wireguard_config, start_wireguard
+from discord_wireguard.wg_control import (
+    initialize_wireguard_config,
+    start_wireguard,
+    stop_wireguard,
+)
 
 log = logging.getLogger(__name__)
 bot = lightbulb.BotApp(
@@ -79,4 +84,8 @@ if __name__ == "__main__":
     start_wireguard()
     t_manager_instance = tunnel_manager.TunnelManager()
 
-    bot.run()
+    try:
+        bot.run()
+    finally:
+        stop_wireguard()
+        sys.exit()
