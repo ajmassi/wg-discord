@@ -8,7 +8,6 @@ RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=/etc/poetry python
 ENV PATH="/etc/poetry/bin:$PATH"
 
 COPY src/ src/
-COPY .env .
 COPY pyproject.toml .
 COPY README.md .
 RUN pip install . --no-cache-dir
@@ -16,4 +15,4 @@ RUN pip install . --no-cache-dir
 ENTRYPOINT ["python", "-m", "discord_wireguard"]
 
 # Manual Testing
-#ENTRYPOINT ["tail", "-f", "/dev/null"]
+# ENTRYPOINT ["tail", "-f", "/dev/null"]

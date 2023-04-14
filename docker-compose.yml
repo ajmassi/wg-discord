@@ -9,6 +9,7 @@ services:
       - NET_ADMIN
     env_file:
       - .env
+    network_mode: "host"
     volumes:
       - discord-wireguard-volume:/etc/wireguard
 
