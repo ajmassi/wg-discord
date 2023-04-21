@@ -5,8 +5,8 @@ import os
 import lightbulb
 import wgconfig
 
-from discord_wireguard import wg_control
-from discord_wireguard.config import conf
+from wg_discord import wg_control
+from wg_discord.config import conf
 
 log = logging.getLogger(__name__)
 

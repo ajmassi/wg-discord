@@ -18,13 +18,13 @@ skip-magic-trailing-comma = true
 exclude_dirs = [".venv", "tests"]
 
 [tool.poetry]
-name = "discord-wireguard"
+name = "wg-discord"
 version = "0.0.1"
 description = ""
 license = "AGPL-3"
 authors = ["Alex Massi"]
 readme = "README.md"
-packages = [{include = "discord_wireguard", from = "src"}]
+packages = [{include = "wg_discord", from = "src"}]
 
 
 [tool.poetry.dependencies]

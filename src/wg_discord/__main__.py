@@ -8,9 +8,9 @@ from pathlib import Path
 import hikari
 import lightbulb
 
-from discord_wireguard import tunnel_manager
-from discord_wireguard.config import conf
-from discord_wireguard.wg_control import (
+from wg_discord import tunnel_manager
+from wg_discord.config import conf
+from wg_discord.wg_control import (
     initialize_wireguard_config,
     start_wireguard,
     stop_wireguard,

@@ -3,7 +3,7 @@ from hashlib import sha512
 
 import pytest
 
-from src.discord_wireguard.config import WireGuardSettings
+from wg_discord.config import WireGuardSettings
 
 base_env = {
     "bot_token": sha512(b"BOT_TOKEN").hexdigest(),

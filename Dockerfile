@@ -12,7 +12,7 @@ COPY pyproject.toml .
 COPY README.md .
 RUN pip install . --no-cache-dir
 
-ENTRYPOINT ["python", "-m", "discord_wireguard"]
+ENTRYPOINT ["python", "-m", "wg_discord"]
 
 # Manual Testing
 # ENTRYPOINT ["tail", "-f", "/dev/null"]
