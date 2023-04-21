@@ -1,5 +1,8 @@
+# IDEs
 .idea/
 .venv/
 .vscode
-.env
 *.pyc
+
+# Project
+.env

@@ -5,7 +5,7 @@ from pathlib import Path
 
 from wgconfig import WGConfig
 
-from discord_wireguard.config import conf
+from wg_discord.config import conf
 
 
 def initialize_wireguard_config():
