@@ -15,11 +15,8 @@
   - [Python](#python)
   - [Docker-Compose](#docker-compose)
 
-&nbsp;
-
 ## About
 
-***  
 WG-Discord is an admin and user-friendly tool for deploying a Discord-integrated WireGuard instance. The application will instantiate WireGuard, process user keys, and assign IP addresses.
 
 ### Built With
@@ -31,19 +28,14 @@ WG-Discord is an admin and user-friendly tool for deploying a Discord-integrated
 - [Lightbulb](https://github.com/tandemdude/hikari-lightbulb) - Command handler for Hikari
 - [Pydantic](https://github.com/pydantic/pydantic) - Used for app configuration management
 
-&nbsp;
-
 ## Deployment
 
-***  
 **IMPORTANT:** WireGuard requires **root** access to run so that it can modify network interfaces and routing. For this reason, there are a couple ways to execute WG-Discord:
 
 - Called directly as a python package on host
 - Spun up via Docker-Compose
 
-**Mitigation** In order to limit potential system vulnerability, the Docker deployment will run as root in a container with host network access and NET_ADMIN activated. This configuration provides a reduced surface, and improved security over running the Python package directly on the host.
-
-&nbsp;
+**Mitigation:** In order to limit potential system vulnerability, the Docker deployment will run as root in a container with host network access and NET_ADMIN activated. This configuration provides a reduced surface, and improved security over running the Python package directly on the host.
 
 ### Configuration
 
@@ -57,11 +49,9 @@ The following are configuration items must be set to properly start:
 | GUILD_PRIVATE_KEY | PrivateKey | WireGuard private key to be used on the application interface |
 | GUILD_PUBLIC_KEY | PublicKey | WireGuard public key to be provided to users |
 | GUILD_IP_INTERFACE | Address | CIDR address that defines both the app's IP and IP range assignable to users |
-| GUILD_INTERFACE_LISTEN_PORT | ListenPort | Port WireGuard will listen on |
+| GUILD_INTERFACE_LISTEN_PORT | ListenPort | Port that WireGuard will listen on |
 | USER_ENDPOINT | Endpoint | Address or hostname and port that users will connect to |
 | USER_ALLOWED_IPS | AllowedIPs | IP ranges the user will have routed through WireGuard |
-
-&nbsp;  
 
 **Optional**  
 The following are not needed but may be applicable for your WireGuard needs:
@@ -78,11 +68,9 @@ The following are not needed but may be applicable for your WireGuard needs:
 | GUILD_POST_DOWN | PostDown | Command to be run after the interface stops |
 | ~~USER_PERSISTENT_KEEP_ALIVE~~ | ~~PersistentKeepalive~~ | ~~Time (seconds) interval to send keepalive packet to the server endpoint~~ |
 
-&nbsp;
-
 ### Python
 
-**Dependencies**
+**Dependencies**  
 The following are required to be on the host:
 
 ```text
@@ -95,8 +83,6 @@ WireGuard (incl. wg-quick)
     ```text
     python -m wg-discord
     ```
-
-&nbsp;
 
 ### Docker-Compose
 
