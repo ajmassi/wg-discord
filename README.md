@@ -7,40 +7,48 @@
 
 <!-- TABLE OF CONTENTS -->
 ### Table of Contents
+
 - [About](#about)
   - [Built With](#built-with)
 - [Deployment](#deployment)
   - [Configuration](#configuration)
   - [Python](#python)
   - [Docker-Compose](#docker-compose)
-- [Development](#development)
 
 &nbsp;
+
 ## About
+
 ***  
 WG-Discord is an admin and user-friendly tool for deploying a Discord-integrated WireGuard instance. The application will instantiate WireGuard, process user keys, and assign IP addresses.
 
 ### Built With
+
 3rd-Party Packages:
-* [wgconfig](https://github.com/towalink/wgconfig) - WireGuard config parsing
-* [Hikari](https://github.com/hikari-py/hikari) - Discord API library
-* [Lightbulb](https://github.com/tandemdude/hikari-lightbulb) - Command handler for Hikari
-* [Pydantic](https://github.com/pydantic/pydantic) - Used for app configuration management
+
+- [wgconfig](https://github.com/towalink/wgconfig) - WireGuard config parsing
+- [Hikari](https://github.com/hikari-py/hikari) - Discord API library
+- [Lightbulb](https://github.com/tandemdude/hikari-lightbulb) - Command handler for Hikari
+- [Pydantic](https://github.com/pydantic/pydantic) - Used for app configuration management
 
 &nbsp;
+
 ## Deployment
+
 ***  
-**IMPORTANT:** WireGuard requires **root** access to run so that it can modify network interfaces and routing. For this reason, there are a couple ways to execute WG-Discord: 
-* Called directly as a python package on host
-* Spun up via Docker-Compose
+**IMPORTANT:** WireGuard requires **root** access to run so that it can modify network interfaces and routing. For this reason, there are a couple ways to execute WG-Discord:
+
+- Called directly as a python package on host
+- Spun up via Docker-Compose
 
 **Mitigation** In order to limit potential system vulnerability, the Docker deployment will run as root in a container with host network access and NET_ADMIN activated. This configuration provides a reduced surface, and improved security over running the Python package directly on the host.
 
 &nbsp;
+
 ### Configuration
 
 **Required**  
-The following are configuration items must be set to properly start:    
+The following are configuration items must be set to properly start:
 | Name | WG Mapping | Description |
 | --- | --- | --- |
 | BOT_TOKEN |  | Your bot's Discord token |
@@ -71,49 +79,43 @@ The following are not needed but may be applicable for your WireGuard needs:
 | ~~USER_PERSISTENT_KEEP_ALIVE~~ | ~~PersistentKeepalive~~ | ~~Time (seconds) interval to send keepalive packet to the server endpoint~~ |
 
 &nbsp;
+
 ### Python
+
 **Dependencies**
 The following are required to be on the host:
-```
+
+```text
 Python >= 3.11
 WireGuard (incl. wg-quick)
 ```
+
 1. Run package
-```
-python -m wg-discord
-```
+
+    ```text
+    python -m wg-discord
+    ```
 
 &nbsp;
+
 ### Docker-Compose
+
 **NOTE:** The Docker-Compose instance does not require WireGuard to be installed on the host, and will store its WireGuard config file via Docker Volume.
 
 1. Build:
-```
-make build
-```
 
-2. Run:
-```
-make up
-```
+    ```text
+    make build
+    ```
 
-3. Verify:
-```
-make logs
-```
+1. Run:
 
-&nbsp;
-## Development
-***
-**Dependencies**
-```
-# Required
-Python >= 3.11
-WireGuard (incl. wg-quick)
+    ```text
+    make up
+    ```
 
-# Recommended
-Docker
-Docker-Compose
-Poetry
-Make
-```
+1. Verify:
+
+    ```text
+    make logs
+    ```
