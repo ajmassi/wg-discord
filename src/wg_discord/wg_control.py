@@ -16,7 +16,7 @@ def initialize_wireguard_config():
         raise e
 
     guild_conf.initialize_file()
-    guild_conf.add_attr(None, "Address", conf.guild_interface_address.ip)
+    guild_conf.add_attr(None, "Address", conf.guild_ip_interface.ip)
     guild_conf.add_attr(None, "ListenPort", conf.guild_interface_listen_port)
     guild_conf.add_attr(None, "PrivateKey", conf.guild_private_key)
     # if conf.guild_interface_dns:

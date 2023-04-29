@@ -15,7 +15,7 @@ base_env = {
     "guild_public_key": b64encode(
         bytes(sha512(b"GUILD_PUBLIC_KEY").hexdigest()[:32].encode())
     ),
-    "guild_interface_address": "0.0.0.0",
+    "guild_ip_interface": "0.0.0.0",
     "guild_interface_listen_port": "11111",
     "user_endpoint": "test.endpoint.local:14142",
     "guild_save_config": False,

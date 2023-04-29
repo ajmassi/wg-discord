@@ -21,7 +21,7 @@ class WireGuardSettings(BaseSettings):
     wireguard_user_config_dir: str
     guild_private_key: str = Field(..., min_length=44, max_length=44)
     guild_public_key: str = Field(..., min_length=44, max_length=44)
-    guild_interface_address: IPvAnyInterface = Field(...)
+    guild_ip_interface: IPvAnyInterface = Field(...)
     guild_interface_listen_port: int = Field(..., ge=1, le=65535)
     # Optional
     guild_save_config: bool = Field(default=False)
