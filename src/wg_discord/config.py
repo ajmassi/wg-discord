@@ -1,11 +1,15 @@
 import base64
 import binascii
 import ipaddress
+import os
 import logging
 import shlex
 from typing import Any, List, Optional
 
-from pydantic import BaseSettings, Field, IPvAnyInterface, IPvAnyNetwork, validator
+import wgconfig
+import wgconfig.wgexec
+
+from pydantic import BaseSettings, Field, IPvAnyInterface, IPvAnyNetwork, validator, root_validator
 from pydantic.fields import ModelField
 
 log = logging.getLogger(__name__)
@@ -19,8 +23,8 @@ class WireGuardSettings(BaseSettings):
     # Required
     wireguard_config_path: str
     wireguard_user_config_dir: str
-    guild_private_key: str = Field(..., min_length=44, max_length=44)
-    guild_public_key: str = Field(..., min_length=44, max_length=44)
+    guild_private_key: Optional[str]
+    guild_public_key: Optional[str]
     guild_ip_interface: IPvAnyInterface = Field(...)
     guild_interface_listen_port: int = Field(..., ge=1, le=65535)
     # Optional
@@ -47,23 +51,34 @@ class WireGuardSettings(BaseSettings):
             return False
         return v
 
+    @root_validator(pre=True)
+    def set_key_pair(cls, values: dict) -> dict:  # noqa: B902
+        if not values.get("guild_private_key"):
+            if os.path.exists(values.get("wireguard_config_path")):
+                wg_config = wgconfig.WGConfig(values.get("wireguard_config_path"))
+                wg_config.read_file()
+                values["guild_private_key"] = wg_config.interface.get("PrivateKey")
+            else:
+                values["guild_private_key"] = wgconfig.wgexec.generate_privatekey()
+
+        priv_key = values.get("guild_private_key")
+
+        try:
+            if len(base64.b64decode(priv_key)) != 32:
+                raise ValueError(f"Invalid WireGuard key {priv_key}, unable to start.")
+        except binascii.Error:
+            raise ValueError(  # noqa: B904
+                f"Invalid WireGuard key {priv_key}, unable to start."
+            )
+        
+        values["guild_public_key"] = wgconfig.wgexec.get_publickey(priv_key)
+        return values
+
     @validator("*")
     def shell_safe(cls, v: Any, field: ModelField) -> Any:  # noqa: B902
         if field.type_ is str:
             return shlex.quote(v)
         return v
-
-    @validator("guild_private_key", "guild_public_key")
-    def check_key(cls, key: str) -> str:  # noqa: B902
-        try:
-            if len(base64.b64decode(key)) == 32:
-                return key
-            else:
-                raise ValueError(f"Invalid WireGuard key {key}, unable to start.")
-        except binascii.Error:
-            raise ValueError(  # noqa: B904
-                f"Invalid WireGuard key {key}, unable to start."
-            )
 
     @validator("user_endpoint")
     def check_endpoint(cls, endpoint: str) -> str:  # noqa: B902
