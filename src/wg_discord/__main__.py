@@ -14,6 +14,7 @@ from wg_discord.wg_control import (
     initialize_wireguard_config,
     start_wireguard,
     stop_wireguard,
+    update_private_key,
 )
 
 log = logging.getLogger(__name__)
@@ -78,6 +79,8 @@ async def echo(ctx: lightbulb.Context) -> None:
 if __name__ == "__main__":
     if not Path(conf.wireguard_config_path).exists():
         initialize_wireguard_config()
+    else:
+        update_private_key(conf.guild_private_key)
 
     Path(conf.wireguard_user_config_dir).mkdir(parents=True, exist_ok=True)
 

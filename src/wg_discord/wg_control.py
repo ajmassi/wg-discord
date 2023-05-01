@@ -36,6 +36,13 @@ def initialize_wireguard_config():
 
     guild_conf.write_file()
 
+def update_private_key(key):
+    try:
+        guild_conf = WGConfig(conf.wireguard_config_path)
+    except PermissionError as e:
+        raise e
+    
+    guild_conf.interface["PrivateKey"] = key
 
 def start_wireguard():
     conf_file = os.path.basename(os.path.splitext(conf.wireguard_config_path)[0])
