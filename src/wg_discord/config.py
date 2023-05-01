@@ -1,9 +1,9 @@
 import base64
 import binascii
 import ipaddress
-import os
 import logging
 import shlex
+from pathlib import Path
 from typing import Any, List, Optional
 
 import wgconfig
@@ -54,7 +54,7 @@ class WireGuardSettings(BaseSettings):
     @root_validator(pre=True)
     def set_key_pair(cls, values: dict) -> dict:  # noqa: B902
         if not values.get("guild_private_key"):
-            if os.path.exists(values.get("wireguard_config_path")):
+            if Path(values.get("wireguard_config_path")).exists():
                 wg_config = wgconfig.WGConfig(values.get("wireguard_config_path"))
                 wg_config.read_file()
                 values["guild_private_key"] = wg_config.interface.get("PrivateKey")
