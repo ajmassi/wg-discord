@@ -2,7 +2,7 @@ import asyncio
 import base64
 import binascii
 import logging
-import sys
+from sys import exit
 from pathlib import Path
 
 import hikari
@@ -22,11 +22,10 @@ bot = lightbulb.BotApp(
     token=conf.bot_token,
     intents=hikari.Intents.GUILD_MESSAGES | hikari.Intents.DM_MESSAGES,
 )
-t_manager_instance = None
 
 
 class KeyValidationError(Exception):
-    def __init(self, message):
+    def __init__(self, message):
         self.message = message
         super().__init__(self.message)
 
@@ -61,9 +60,12 @@ async def echo(ctx: lightbulb.Context) -> None:
             f'User "{ctx.user.id.__str__()}" attempting to register with Key "{ctx.options.key}"'
         )
         await validate_public_key(ctx.options.key)
+        
+        t_manager_instance = tunnel_manager.TunnelManager()
         await t_manager_instance.process_registration(
             ctx, ctx.user.id.__str__(), ctx.options.key
         )
+        
         log.info(
             f'User "{ctx.user.id.__str__()}" registered successfully with Key "{ctx.options.key}"'
         )
@@ -76,7 +78,7 @@ async def echo(ctx: lightbulb.Context) -> None:
         await ctx.delete_last_response()
 
 
-if __name__ == "__main__":
+def main():
     if not Path(conf.wireguard_config_path).exists():
         initialize_wireguard_config()
     else:
@@ -85,10 +87,12 @@ if __name__ == "__main__":
     Path(conf.wireguard_user_config_dir).mkdir(parents=True, exist_ok=True)
 
     start_wireguard()
-    t_manager_instance = tunnel_manager.TunnelManager()
 
     try:
         bot.run()
     finally:
         stop_wireguard()
-        sys.exit()
+        exit()
+
+if __name__ == "__main__":
+    main()

@@ -3,23 +3,23 @@ import logging
 import os
 
 import lightbulb
-import wgconfig
+from wgconfig import WGConfig
 
-from wg_discord import wg_control
 from wg_discord.config import conf
+from wg_discord.wg_control import hot_reload_wgconf
 
 log = logging.getLogger(__name__)
 
-
 class ConfigGenError(Exception):
-    def __init(self, message):
+    def __init__(self, message):
         self.message = message
         super().__init__(self.message)
 
 
 class TunnelManager:
     def __init__(self):
-        self.wg_config = wgconfig.WGConfig(conf.wireguard_config_path)
+        self.wg_config = WGConfig("")
+        self.wg_config.filename = conf.wireguard_config_path
         self.wg_config.read_file()
 
     def get_an_available_ip(self) -> ipaddress.IPv4Address | ipaddress.IPv6Address:
@@ -62,7 +62,7 @@ class TunnelManager:
         """
         wg_conf_filepath = os.path.join(conf.wireguard_user_config_dir, user_id)
         try:
-            user_conf = wgconfig.WGConfig(wg_conf_filepath)
+            user_conf = WGConfig(wg_conf_filepath)
         except PermissionError as e:
             raise e
 
@@ -164,7 +164,7 @@ class TunnelManager:
             key_is_approved = True
 
         if key_is_approved:
-            wg_control.hot_reload_wgconf()
+            hot_reload_wgconf()
             await ctx.author.send(
                 "Add the following lines to your tunnel config below your [Interface]'s PrivateKey:"
             )
