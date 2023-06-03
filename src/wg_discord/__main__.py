@@ -9,7 +9,7 @@ import hikari
 import lightbulb
 
 from wg_discord import tunnel_manager
-from wg_discord.config import conf
+from wg_discord.config import settings
 from wg_discord.wg_control import (
     initialize_wireguard_config,
     start_wireguard,
@@ -19,7 +19,7 @@ from wg_discord.wg_control import (
 
 log = logging.getLogger(__name__)
 bot = lightbulb.BotApp(
-    token=conf.bot_token,
+    token=settings.bot_token,
     intents=hikari.Intents.GUILD_MESSAGES | hikari.Intents.DM_MESSAGES,
 )
 
@@ -79,12 +79,12 @@ async def echo(ctx: lightbulb.Context) -> None:
 
 
 def main():
-    if not Path(conf.wireguard_config_path).exists():
+    if not Path(settings.wireguard_config_path).exists():
         initialize_wireguard_config()
     else:
-        update_private_key(conf.guild_private_key)
+        update_private_key(settings.guild_private_key)
 
-    Path(conf.wireguard_user_config_dir).mkdir(parents=True, exist_ok=True)
+    Path(settings.wireguard_user_config_dir).mkdir(parents=True, exist_ok=True)
 
     start_wireguard()
 

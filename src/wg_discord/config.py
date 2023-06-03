@@ -6,16 +6,29 @@ import shlex
 from pathlib import Path
 from typing import Any, List, Optional
 
-import wgconfig
-import wgconfig.wgexec
-
-from pydantic import BaseSettings, Field, IPvAnyInterface, IPvAnyNetwork, validator, root_validator
+from wgconfig import WGConfig, wgexec
+from pydantic import (
+    BaseSettings,
+    Field,
+    IPvAnyInterface,
+    IPvAnyNetwork,
+    root_validator,
+    validator,
+    constr,
+)
 from pydantic.fields import ModelField
 
 log = logging.getLogger(__name__)
 
+def get_wireguard_config(wireguard_config_path) -> WGConfig:
+    # Hack of init to allow reloading of existing file
+    wg_conf = WGConfig("")
+    wg_conf.filename = wireguard_config_path
+    wg_conf.read_file()
+    return wg_conf
 
-class WireGuardSettings(BaseSettings):
+
+class Settings(BaseSettings):
     # Discord
     bot_token: str
 
@@ -23,8 +36,8 @@ class WireGuardSettings(BaseSettings):
     # Required
     wireguard_config_path: str
     wireguard_user_config_dir: str
-    guild_private_key: Optional[str]
-    guild_public_key: Optional[str]
+    guild_private_key: Optional[constr(strip_whitespace=True)]
+    guild_public_key: Optional[constr(strip_whitespace=True)]
     guild_ip_interface: IPvAnyInterface = Field(...)
     guild_interface_listen_port: int = Field(..., ge=1, le=65535)
     # Optional
@@ -51,15 +64,14 @@ class WireGuardSettings(BaseSettings):
             return False
         return v
 
-    @root_validator(pre=True)
+    @root_validator()
     def set_key_pair(cls, values: dict) -> dict:  # noqa: B902
         if not values.get("guild_private_key"):
             if Path(values.get("wireguard_config_path")).exists():
-                wg_config = wgconfig.WGConfig(values.get("wireguard_config_path"))
-                wg_config.read_file()
+                wg_config = get_wireguard_config(values.get("wireguard_config_path"))
                 values["guild_private_key"] = wg_config.interface.get("PrivateKey")
             else:
-                values["guild_private_key"] = wgconfig.wgexec.generate_privatekey()
+                values["guild_private_key"] = wgexec.generate_privatekey()
 
         priv_key = values.get("guild_private_key")
 
@@ -70,8 +82,8 @@ class WireGuardSettings(BaseSettings):
             raise ValueError(  # noqa: B904
                 f"Invalid WireGuard key {priv_key}, unable to start."
             )
-        
-        values["guild_public_key"] = wgconfig.wgexec.get_publickey(priv_key)
+
+        values["guild_public_key"] = wgexec.get_publickey(priv_key)
         return values
 
     @validator("*")
@@ -124,4 +136,4 @@ class WireGuardSettings(BaseSettings):
         env_file_encoding = "utf-8"
 
 
-conf = WireGuardSettings()
+settings = Settings()

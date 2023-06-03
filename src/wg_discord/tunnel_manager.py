@@ -5,7 +5,7 @@ import os
 import lightbulb
 from wgconfig import WGConfig
 
-from wg_discord.config import conf
+from wg_discord.config import settings, get_wireguard_config
 from wg_discord.wg_control import hot_reload_wgconf
 
 log = logging.getLogger(__name__)
@@ -18,9 +18,7 @@ class ConfigGenError(Exception):
 
 class TunnelManager:
     def __init__(self):
-        self.wg_config = WGConfig("")
-        self.wg_config.filename = conf.wireguard_config_path
-        self.wg_config.read_file()
+        self.wg_config = get_wireguard_config(settings.wireguard_config_path)
 
     def get_an_available_ip(self) -> ipaddress.IPv4Address | ipaddress.IPv6Address:
         """
@@ -29,16 +27,16 @@ class TunnelManager:
         :return ipaddress.IPv4Address | ipaddress.IPv6Address: Unclaimed ip address
         """
         reserved_ips = set().union(
-            *[set(x) for x in conf.guild_interface_reserved_network_addresses]
+            *[set(x) for x in settings.guild_interface_reserved_network_addresses]
         )
 
-        # Collect IPs defined in WireGuard conf
+        # Collect IPs defined in WireGuard settings
         claimed_ips = set()
         for _, v in self.wg_config.peers.items():
             claimed_ips.update(ipaddress.ip_network(v.get("AllowedIPs")).hosts())
 
         available_ips = (
-            set(conf.guild_ip_interface.network.hosts())
+            set(settings.guild_ip_interface.network.hosts())
             - reserved_ips
             - claimed_ips
         )
@@ -60,7 +58,7 @@ class TunnelManager:
         :param user_address: IP address assigned to the user
         :return None:
         """
-        wg_conf_filepath = os.path.join(conf.wireguard_user_config_dir, user_id)
+        wg_conf_filepath = os.path.join(settings.wireguard_user_config_dir, user_id)
         try:
             user_conf = WGConfig(wg_conf_filepath)
         except PermissionError as e:
@@ -68,13 +66,13 @@ class TunnelManager:
 
         user_conf.add_attr(None, "Address", user_address)
 
-        user_conf.add_peer(conf.guild_public_key)
+        user_conf.add_peer(settings.guild_public_key)
         user_conf.add_attr(
-            conf.guild_public_key,
+            settings.guild_public_key,
             "AllowedIPs",
-            ",".join(map(str, conf.user_allowed_ips)),
+            ",".join(map(str, settings.user_allowed_ips)),
         )
-        user_conf.add_attr(conf.guild_public_key, "Endpoint", conf.user_endpoint)
+        user_conf.add_attr(settings.guild_public_key, "Endpoint", settings.user_endpoint)
 
         user_conf.write_file()
         # Remove leading "[Interface]" line
@@ -169,7 +167,7 @@ class TunnelManager:
                 "Add the following lines to your tunnel config below your [Interface]'s PrivateKey:"
             )
             try:
-                with open(os.path.join(conf.wireguard_user_config_dir, user_id)) as f:
+                with open(os.path.join(settings.wireguard_user_config_dir, user_id)) as f:
                     await ctx.author.send(f.read())
             except PermissionError as e:
                 self.wg_config.del_peer(key)
