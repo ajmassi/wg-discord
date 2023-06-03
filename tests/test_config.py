@@ -1,48 +1,147 @@
-from base64 import b64encode
-from hashlib import sha512
-
+import os 
+import inspect
 import pytest
+import wgconfig
+import wgconfig.wgexec
 
-from wg_discord.config import WireGuardSettings
-
-base_env = {
-    "bot_token": sha512(b"BOT_TOKEN").hexdigest(),
-    "wireguard_config_path": ".env.example",
-    "wireguard_user_config_dir": ".",
-    "guild_private_key": b64encode(
-        bytes(sha512(b"GUILD_PRIVATE_KEY").hexdigest()[:32].encode())
-    ),
-    "guild_public_key": b64encode(
-        bytes(sha512(b"GUILD_PUBLIC_KEY").hexdigest()[:32].encode())
-    ),
-    "guild_ip_interface": "0.0.0.0",
-    "guild_interface_listen_port": "11111",
-    "user_endpoint": "test.endpoint.local:14142",
-    "guild_save_config": False,
-    "guild_interface_reserved_network_addresses": None,
-    "guild_interface_dns": None,
-    # TODO "user_allowed_ips": None,
-    # TODO "guild_interface_mtu": None,
-    # TODO "guild_interface_table": None,
-    # TODO "user_persistent_keep_alive": None
-}
+from wg_discord.__main__ import main
+from wg_discord.config import settings, get_wireguard_config
 
 
-@pytest.mark.parametrize(
-    "value", ["FALSE", "", None, False, "FaLsE", "kajsbfjkabskfjbs", 1241]
-)
-def test_false_guild_save_config(value):
-    test_env = base_env
-    test_env.update({"guild_save_config": value})
-    print(test_env)
-    config = WireGuardSettings(**test_env)
-    assert config.guild_save_config is False
+def create_wg_config(wireguard_config_path, guild_private_key):
+    """Helper function to generate WireGuard config"""
+    wg_conf_content = inspect.cleandoc(f"""
+    [Interface]
+    Address = 192.168.1.1
+    ListenPort = 51820
+    PrivateKey = {guild_private_key}
+    """)    
+
+    with open(wireguard_config_path, "w") as f:
+        f.write(wg_conf_content)
+
+    
+def test_key_init_privkey_no_conf_yes():
+    """
+    Scenario:
+        The env var "GUILD_PRIVATE_KEY" is not set and there is an existing wg.conf
+        file
+    
+    Expectation:
+        The settings.guild_private_key and settings.guild_public_key will populate upon
+        validation, based on the key saved in our existing wg.conf
+    """
+    ### Setup ###
+    # Create a wg-quick config with a new, random private key
+    test_key = wgconfig.wgexec.generate_privatekey()
+    create_wg_config(settings.wireguard_config_path, test_key)
+    
+    # Check that PrivateKey was set correctly in our wg.conf
+    wg_config = get_wireguard_config(settings.wireguard_config_path)
+    assert wg_config.interface["PrivateKey"] == test_key
+    
+    # Make sure settings.guild_private_key is blank on app start
+    del os.environ["GUILD_PRIVATE_KEY"]
+    # Force re-read and validation of settings
+    settings.__init__()
+
+    ### Test ###
+    # Start app
+    with pytest.raises(SystemExit):
+        main()
+
+    # Check that private key has not changed and public key is correct
+    wg_config = get_wireguard_config(settings.wireguard_config_path)
+    assert wg_config.interface["PrivateKey"] == test_key
+    assert settings.guild_public_key == wgconfig.wgexec.get_publickey(test_key)
+
+def test_key_init_privkey_no_conf_no():
+    """
+    Scenario:
+        The env var "GUILD_PRIVATE_KEY" is not set and there is no wg.conf file
+    
+    Expectation:
+        The settings.guild_private_key and settings.guild_public_key will populate
+        with new keys, and a wg.conf will be created with a matching PrivateKey
+    """
+    ### Setup ###
+    # Check file does not exist yet
+    assert not os.path.isfile(settings.wireguard_config_path)
+    
+    # Make sure settings.guild_private_key is blank on app start
+    del os.environ["GUILD_PRIVATE_KEY"]
+    # Force re-read and validation of settings
+    settings.__init__()
+
+    ### Test ###
+    # Start app
+    with pytest.raises(SystemExit):
+        main()
+
+    # Check that file created and has key set correctly
+    assert os.path.isfile(settings.wireguard_config_path)
+    wg_config = get_wireguard_config(settings.wireguard_config_path)
+    assert wg_config.interface["PrivateKey"] == settings.guild_private_key
 
 
-@pytest.mark.parametrize("value", ["True", "true", "TrUe", True])
-def test_true_guild_save_config(value):
-    test_env = base_env
-    test_env.update({"guild_save_config": value})
-    print(test_env)
-    config = WireGuardSettings(**test_env)
-    assert config.guild_save_config is True
+def test_key_init_privkey_yes_conf_yes():
+    """
+    Scenario:
+        The env var "GUILD_PRIVATE_KEY" is set and there is an existing wg.conf file
+    
+    Expectation:
+        The wg.conf will have its Interface's PrivateKey updated to match the value in
+        settings.guild_private_key
+    """
+    ### Setup ###
+    # Create "previous" WireGuard config with a unique private key
+    create_wg_config(settings.wireguard_config_path, wgconfig.wgexec.generate_privatekey())
+    
+    # Create random new private key for settings as well
+    test_key = wgconfig.wgexec.generate_privatekey()
+    os.environ["GUILD_PRIVATE_KEY"] = test_key
+    # Force re-read and validation of settings
+    settings.__init__()
+
+    # Check initial settings.guild_private_key is unique from the one set in wg.conf
+    wg_config = get_wireguard_config(settings.wireguard_config_path)
+    assert wg_config.interface["PrivateKey"] != settings.guild_private_key
+
+    ### Test ###
+    # Start app
+    with pytest.raises(SystemExit):
+        main()
+
+    # Check that wg.conf has had its key updated has been updated
+    wg_config = get_wireguard_config(settings.wireguard_config_path)
+    assert wg_config.interface["PrivateKey"] == settings.guild_private_key
+    assert settings.guild_public_key == wgconfig.wgexec.get_publickey(test_key)
+
+def test_key_init_privkey_yes_conf_no():
+    """
+    Scenario:
+        The env var "GUILD_PRIVATE_KEY" is set and there is no wg.conf file
+    
+    Expectation:
+        A wg.conf will be created with a PrivateKey to match settings.guild_private_key
+    """
+    ### Setup ###
+    # Check file does not exist yet
+    assert not os.path.isfile(settings.wireguard_config_path)
+    
+    # Create random new private key for settings
+    test_key = wgconfig.wgexec.generate_privatekey()
+    os.environ["GUILD_PRIVATE_KEY"] = test_key
+    # Force re-read and validation of settings
+    settings.__init__()
+
+    ### Test ###
+    # Start app
+    with pytest.raises(SystemExit):
+        main()
+
+    # Check that file created and has key set correctly
+    assert os.path.isfile(settings.wireguard_config_path)
+    wg_config = get_wireguard_config(settings.wireguard_config_path)
+    assert wg_config.interface["PrivateKey"] == settings.guild_private_key
+    assert settings.guild_public_key == wgconfig.wgexec.get_publickey(test_key)
