@@ -6,19 +6,20 @@ import shlex
 from pathlib import Path
 from typing import Any, List, Optional
 
-from wgconfig import WGConfig, wgexec
 from pydantic import (
     BaseSettings,
     Field,
     IPvAnyInterface,
     IPvAnyNetwork,
+    constr,
     root_validator,
     validator,
-    constr,
 )
 from pydantic.fields import ModelField
+from wgconfig import WGConfig, wgexec
 
 log = logging.getLogger(__name__)
+
 
 def get_wireguard_config(wireguard_config_path) -> WGConfig:
     # Hack of init to allow reloading of existing file

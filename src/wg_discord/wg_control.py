@@ -6,11 +6,13 @@ from pathlib import Path
 from wgconfig import WGConfig
 from wgconfig.wgexec import generate_keypair
 
-from wg_discord.config import settings, get_wireguard_config
+from wg_discord.config import get_wireguard_config, settings
 
 
 def initialize_wireguard_config():
-    Path(os.path.dirname(settings.wireguard_config_path)).mkdir(parents=True, exist_ok=True)
+    Path(os.path.dirname(settings.wireguard_config_path)).mkdir(
+        parents=True, exist_ok=True
+    )
     try:
         guild_conf = WGConfig(settings.wireguard_config_path)
     except PermissionError as e:
@@ -44,12 +46,12 @@ def initialize_wireguard_config():
 def update_wireguard_config_private_key(key):
     if not key:
         return
-    
+
     try:
         guild_conf = get_wireguard_config(settings.wireguard_config_path)
     except PermissionError as e:
         raise e
-    
+
     guild_conf.del_attr(None, "PrivateKey")
     guild_conf.add_attr(None, "PrivateKey", key)
     guild_conf.write_file()

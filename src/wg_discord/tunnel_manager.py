@@ -5,10 +5,11 @@ import os
 import lightbulb
 from wgconfig import WGConfig
 
-from wg_discord.config import settings, get_wireguard_config
+from wg_discord.config import get_wireguard_config, settings
 from wg_discord.wg_control import hot_reload_wgconf
 
 log = logging.getLogger(__name__)
+
 
 class ConfigGenError(Exception):
     def __init__(self, message):
@@ -72,7 +73,9 @@ class TunnelManager:
             "AllowedIPs",
             ",".join(map(str, settings.user_allowed_ips)),
         )
-        user_conf.add_attr(settings.guild_public_key, "Endpoint", settings.user_endpoint)
+        user_conf.add_attr(
+            settings.guild_public_key, "Endpoint", settings.user_endpoint
+        )
 
         user_conf.write_file()
         # Remove leading "[Interface]" line
@@ -167,7 +170,9 @@ class TunnelManager:
                 "Add the following lines to your tunnel config below your [Interface]'s PrivateKey:"
             )
             try:
-                with open(os.path.join(settings.wireguard_user_config_dir, user_id)) as f:
+                with open(
+                    os.path.join(settings.wireguard_user_config_dir, user_id)
+                ) as f:
                     await ctx.author.send(f.read())
             except PermissionError as e:
                 self.wg_config.del_peer(key)

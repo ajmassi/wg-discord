@@ -2,8 +2,8 @@ import asyncio
 import base64
 import binascii
 import logging
-from sys import exit
 from pathlib import Path
+from sys import exit
 
 import hikari
 import lightbulb
@@ -60,12 +60,12 @@ async def echo(ctx: lightbulb.Context) -> None:
             f'User "{ctx.user.id.__str__()}" attempting to register with Key "{ctx.options.key}"'
         )
         await validate_public_key(ctx.options.key)
-        
+
         t_manager_instance = tunnel_manager.TunnelManager()
         await t_manager_instance.process_registration(
             ctx, ctx.user.id.__str__(), ctx.options.key
         )
-        
+
         log.info(
             f'User "{ctx.user.id.__str__()}" registered successfully with Key "{ctx.options.key}"'
         )
@@ -93,6 +93,7 @@ def main():
     finally:
         stop_wireguard()
         exit()
+
 
 if __name__ == "__main__":
     main()
