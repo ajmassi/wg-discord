@@ -6,7 +6,7 @@ from pathlib import Path
 from wgconfig import WGConfig
 from wgconfig.wgexec import generate_keypair
 
-from wg_discord.config import get_wireguard_config, settings
+from wg_discord.settings import get_wireguard_config, settings
 
 
 def initialize_wireguard_config():

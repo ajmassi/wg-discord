@@ -6,7 +6,7 @@ import wgconfig
 import wgconfig.wgexec
 
 from wg_discord.__main__ import main
-from wg_discord.config import get_wireguard_config, settings
+from wg_discord.settings import get_wireguard_config, settings
 
 
 def create_wg_config(wireguard_config_path, guild_private_key):

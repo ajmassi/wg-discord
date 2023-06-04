@@ -5,7 +5,7 @@ import os
 import lightbulb
 from wgconfig import WGConfig
 
-from wg_discord.config import get_wireguard_config, settings
+from wg_discord.settings import get_wireguard_config, settings
 from wg_discord.wg_control import hot_reload_wgconf
 
 log = logging.getLogger(__name__)

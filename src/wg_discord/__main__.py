@@ -9,7 +9,7 @@ import hikari
 import lightbulb
 
 from wg_discord import tunnel_manager
-from wg_discord.config import settings
+from wg_discord.settings import settings
 from wg_discord.wg_control import (
     initialize_wireguard_config,
     start_wireguard,

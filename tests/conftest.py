@@ -7,7 +7,7 @@ from dotenv import dotenv_values, load_dotenv
 
 load_dotenv("./tests/test.env")
 
-from wg_discord.config import settings
+from wg_discord.settings import settings
 
 
 @pytest.fixture(autouse=True)
