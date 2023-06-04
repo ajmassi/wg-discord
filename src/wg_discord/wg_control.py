@@ -4,6 +4,7 @@ import subprocess  # nosec B404
 from pathlib import Path
 
 from wgconfig import WGConfig
+from wgconfig.wgexec import generate_keypair
 
 from wg_discord.config import settings, get_wireguard_config
 
@@ -14,6 +15,9 @@ def initialize_wireguard_config():
         guild_conf = WGConfig(settings.wireguard_config_path)
     except PermissionError as e:
         raise e
+
+    if not settings.guild_private_key:
+        settings.guild_private_key, settings.guild_public_key = generate_keypair()
 
     guild_conf.initialize_file()
     guild_conf.add_attr(None, "Address", settings.guild_ip_interface.ip)
@@ -37,7 +41,7 @@ def initialize_wireguard_config():
     guild_conf.write_file()
 
 
-def update_private_key(key):
+def update_wireguard_config_private_key(key):
     if not key:
         return
     

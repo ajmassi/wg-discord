@@ -14,7 +14,7 @@ from wg_discord.wg_control import (
     initialize_wireguard_config,
     start_wireguard,
     stop_wireguard,
-    update_private_key,
+    update_wireguard_config_private_key,
 )
 
 log = logging.getLogger(__name__)
@@ -82,7 +82,7 @@ def main():
     if not Path(settings.wireguard_config_path).exists():
         initialize_wireguard_config()
     else:
-        update_private_key(settings.guild_private_key)
+        update_wireguard_config_private_key(settings.guild_private_key)
 
     Path(settings.wireguard_user_config_dir).mkdir(parents=True, exist_ok=True)
 
