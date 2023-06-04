@@ -34,3 +34,6 @@ black:
 bandit:
 	$(info ---------- BANDIT ----------)
 	poetry run bandit -c "pyproject.toml" --recursive .
+
+test:
+	poetry run pytest --cov=wg_discord --cov-report=html --cov-report=term

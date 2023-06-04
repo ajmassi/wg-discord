@@ -34,6 +34,7 @@ hikari-lightbulb = "^2.3.1"
 wgconfig = "^0.3.0"
 python-dotenv = "^0.21.0"
 pydantic = "^1.10.4"
+pytest-cov = "^4.1.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.0"
