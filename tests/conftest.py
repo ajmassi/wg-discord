@@ -2,7 +2,7 @@ from unittest import mock
 import tempfile
 import pytest
 import os 
-from dotenv import load_dotenv
+from dotenv import load_dotenv, dotenv_values
 
 load_dotenv("./tests/test.env")
 
@@ -18,6 +18,9 @@ def default_fixture():
 @pytest.fixture(autouse=True)
 def init_settings():
     """Reset Settings for each test"""
+    for k in {**dotenv_values("./tests/test.env")}.keys():
+        os.environ.pop(k, None)
+
     load_dotenv("./tests/test.env", override=True)
 
     # Provide new temp file and dir

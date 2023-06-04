@@ -71,7 +71,7 @@ class Settings(BaseSettings):
                 wg_config = get_wireguard_config(values.get("wireguard_config_path"))
                 values["guild_private_key"] = wg_config.interface.get("PrivateKey")
             else:
-                values["guild_private_key"] = wgexec.generate_privatekey()
+                return values
 
         priv_key = values.get("guild_private_key")
 

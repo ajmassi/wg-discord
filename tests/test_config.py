@@ -39,16 +39,10 @@ def test_key_init_privkey_no_conf_yes():
     # Check that PrivateKey was set correctly in our wg.conf
     wg_config = get_wireguard_config(settings.wireguard_config_path)
     assert wg_config.interface["PrivateKey"] == test_key
-    
-    # Make sure settings.guild_private_key is blank on app start
-    del os.environ["GUILD_PRIVATE_KEY"]
-    # Force re-read and validation of settings
-    settings.__init__()
 
     ### Test ###
-    # Start app
-    with pytest.raises(SystemExit):
-        main()
+    # Force re-read and validation of settings with existing wg.conf
+    settings.__init__()
 
     # Check that private key has not changed and public key is correct
     wg_config = get_wireguard_config(settings.wireguard_config_path)
@@ -68,8 +62,6 @@ def test_key_init_privkey_no_conf_no():
     # Check file does not exist yet
     assert not os.path.isfile(settings.wireguard_config_path)
     
-    # Make sure settings.guild_private_key is blank on app start
-    del os.environ["GUILD_PRIVATE_KEY"]
     # Force re-read and validation of settings
     settings.__init__()
 
@@ -97,7 +89,7 @@ def test_key_init_privkey_yes_conf_yes():
     # Create "previous" WireGuard config with a unique private key
     create_wg_config(settings.wireguard_config_path, wgconfig.wgexec.generate_privatekey())
     
-    # Create random new private key for settings as well
+    # Create private key for settings as well
     test_key = wgconfig.wgexec.generate_privatekey()
     os.environ["GUILD_PRIVATE_KEY"] = test_key
     # Force re-read and validation of settings
@@ -115,7 +107,7 @@ def test_key_init_privkey_yes_conf_yes():
     # Check that wg.conf has had its key updated has been updated
     wg_config = get_wireguard_config(settings.wireguard_config_path)
     assert wg_config.interface["PrivateKey"] == settings.guild_private_key
-    assert settings.guild_public_key == wgconfig.wgexec.get_publickey(test_key)
+    assert settings.guild_private_key == test_key
 
 def test_key_init_privkey_yes_conf_no():
     """
