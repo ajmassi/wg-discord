@@ -3,15 +3,33 @@ import binascii
 import ipaddress
 import logging
 import shlex
+from pathlib import Path
 from typing import Any, List, Optional
 
-from pydantic import BaseSettings, Field, IPvAnyInterface, IPvAnyNetwork, validator
+from pydantic import (
+    BaseSettings,
+    Field,
+    IPvAnyInterface,
+    IPvAnyNetwork,
+    constr,
+    root_validator,
+    validator,
+)
 from pydantic.fields import ModelField
+from wgconfig import WGConfig, wgexec
 
 log = logging.getLogger(__name__)
 
 
-class WireGuardSettings(BaseSettings):
+def get_wireguard_config(wireguard_config_path) -> WGConfig:
+    # Hack of init to allow reloading of existing file
+    wg_conf = WGConfig("")
+    wg_conf.filename = wireguard_config_path
+    wg_conf.read_file()
+    return wg_conf
+
+
+class Settings(BaseSettings):
     # Discord
     bot_token: str
 
@@ -19,8 +37,8 @@ class WireGuardSettings(BaseSettings):
     # Required
     wireguard_config_path: str
     wireguard_user_config_dir: str
-    guild_private_key: str = Field(..., min_length=44, max_length=44)
-    guild_public_key: str = Field(..., min_length=44, max_length=44)
+    guild_private_key: Optional[constr(strip_whitespace=True)]
+    guild_public_key: Optional[constr(strip_whitespace=True)]
     guild_ip_interface: IPvAnyInterface = Field(...)
     guild_interface_listen_port: int = Field(..., ge=1, le=65535)
     # Optional
@@ -47,23 +65,33 @@ class WireGuardSettings(BaseSettings):
             return False
         return v
 
+    @root_validator()
+    def set_key_pair(cls, values: dict) -> dict:  # noqa: B902
+        if not values.get("guild_private_key"):
+            if Path(values.get("wireguard_config_path")).exists():
+                wg_config = get_wireguard_config(values.get("wireguard_config_path"))
+                values["guild_private_key"] = wg_config.interface.get("PrivateKey")
+            else:
+                return values
+
+        priv_key = values.get("guild_private_key")
+
+        try:
+            if len(base64.b64decode(priv_key)) != 32:
+                raise ValueError(f"Invalid WireGuard key {priv_key}, unable to start.")
+        except binascii.Error:
+            raise ValueError(  # noqa: B904
+                f"Invalid WireGuard key {priv_key}, unable to start."
+            )
+
+        values["guild_public_key"] = wgexec.get_publickey(priv_key)
+        return values
+
     @validator("*")
     def shell_safe(cls, v: Any, field: ModelField) -> Any:  # noqa: B902
         if field.type_ is str:
             return shlex.quote(v)
         return v
-
-    @validator("guild_private_key", "guild_public_key")
-    def check_key(cls, key: str) -> str:  # noqa: B902
-        try:
-            if len(base64.b64decode(key)) == 32:
-                return key
-            else:
-                raise ValueError(f"Invalid WireGuard key {key}, unable to start.")
-        except binascii.Error:
-            raise ValueError(  # noqa: B904
-                f"Invalid WireGuard key {key}, unable to start."
-            )
 
     @validator("user_endpoint")
     def check_endpoint(cls, endpoint: str) -> str:  # noqa: B902
@@ -109,4 +137,4 @@ class WireGuardSettings(BaseSettings):
         env_file_encoding = "utf-8"
 
 
-conf = WireGuardSettings()
+settings = Settings()

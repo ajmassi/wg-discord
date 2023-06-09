@@ -47,7 +47,6 @@ The following are configuration items must be set to properly start:
 | WIREGUARD_CONFIG_PATH |  | File path for WireGuard config file (ex. `/etc/wireguard/wg0.conf`) |
 | WIREGUARD_USER_CONFIG_DIR |  | Directory path for storing user configurations (ex. `/etc/wireguard/`) |
 | GUILD_PRIVATE_KEY | PrivateKey | WireGuard private key to be used on the application interface |
-| GUILD_PUBLIC_KEY | PublicKey | WireGuard public key to be provided to users |
 | GUILD_IP_INTERFACE | Address | CIDR address that defines both the app's IP and IP range assignable to users |
 | GUILD_INTERFACE_LISTEN_PORT | ListenPort | Port that WireGuard will listen on |
 | USER_ENDPOINT | Endpoint | Address or hostname and port that users will connect to |

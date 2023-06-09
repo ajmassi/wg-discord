@@ -2,30 +2,30 @@ import asyncio
 import base64
 import binascii
 import logging
-import sys
 from pathlib import Path
+from sys import exit
 
 import hikari
 import lightbulb
 
 from wg_discord import tunnel_manager
-from wg_discord.config import conf
+from wg_discord.settings import settings
 from wg_discord.wg_control import (
     initialize_wireguard_config,
     start_wireguard,
     stop_wireguard,
+    update_wireguard_config_private_key,
 )
 
 log = logging.getLogger(__name__)
 bot = lightbulb.BotApp(
-    token=conf.bot_token,
+    token=settings.bot_token,
     intents=hikari.Intents.GUILD_MESSAGES | hikari.Intents.DM_MESSAGES,
 )
-t_manager_instance = None
 
 
 class KeyValidationError(Exception):
-    def __init(self, message):
+    def __init__(self, message):
         self.message = message
         super().__init__(self.message)
 
@@ -60,9 +60,12 @@ async def echo(ctx: lightbulb.Context) -> None:
             f'User "{ctx.user.id.__str__()}" attempting to register with Key "{ctx.options.key}"'
         )
         await validate_public_key(ctx.options.key)
+
+        t_manager_instance = tunnel_manager.TunnelManager()
         await t_manager_instance.process_registration(
             ctx, ctx.user.id.__str__(), ctx.options.key
         )
+
         log.info(
             f'User "{ctx.user.id.__str__()}" registered successfully with Key "{ctx.options.key}"'
         )
@@ -75,17 +78,22 @@ async def echo(ctx: lightbulb.Context) -> None:
         await ctx.delete_last_response()
 
 
-if __name__ == "__main__":
-    if not Path(conf.wireguard_config_path).exists():
+def main():
+    if not Path(settings.wireguard_config_path).exists():
         initialize_wireguard_config()
+    else:
+        update_wireguard_config_private_key(settings.guild_private_key)
 
-    Path(conf.wireguard_user_config_dir).mkdir(parents=True, exist_ok=True)
+    Path(settings.wireguard_user_config_dir).mkdir(parents=True, exist_ok=True)
 
     start_wireguard()
-    t_manager_instance = tunnel_manager.TunnelManager()
 
     try:
         bot.run()
     finally:
         stop_wireguard()
-        sys.exit()
+        exit()
+
+
+if __name__ == "__main__":
+    main()
