@@ -42,7 +42,6 @@ class Settings(BaseSettings):
     guild_ip_interface: IPvAnyInterface = Field(...)
     guild_interface_listen_port: int = Field(..., ge=1, le=65535)
     # Optional
-    guild_save_config: bool = Field(default=False)
     guild_interface_reserved_network_addresses: Optional[List[IPvAnyNetwork]]
     guild_interface_dns: Optional[List[IPvAnyNetwork]]
     # TODO guild_interface_table:
@@ -58,12 +57,6 @@ class Settings(BaseSettings):
     user_allowed_ips: List[IPvAnyNetwork]
     # Optional
     # TODO user_persistent_keep_alive:
-
-    @validator("guild_save_config", pre=True)
-    def cover_guild_save_config_empty(cls, v):  # noqa: B902
-        if str(v).lower() != "true":
-            return False
-        return v
 
     @root_validator()
     def set_key_pair(cls, values: dict) -> dict:  # noqa: B902

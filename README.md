@@ -57,7 +57,6 @@ The following are not needed but may be applicable for your WireGuard needs:
 | Name | WG Mapping | Description |
 | --- | --- | --- |
 | GUILD_INTERFACE_RESERVED_NETWORK_ADDRESSES |  | IP addresses not available for auto-assignment |
-| GUILD_SAVE_CONFIG | SaveConfig | Config is saved from the current state of the interface upon shutdown |
 | ~~GUILD_INTERFACE_DNS~~ | ~~DNS~~ | ~~Comma-separated list of IP addresses or non-IP hostnames~~ |
 | ~~GUILD_INTERFACE_TABLE~~ | ~~Table~~ | ~~Routing table to which routes are added~~ |
 | ~~GUILD_INTERFACE_MTU~~ | ~~MTU~~ | ~~MTU to override automatic discovery~~ |
