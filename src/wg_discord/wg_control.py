@@ -9,9 +9,7 @@ from wg_discord.settings import get_wireguard_config, settings
 
 
 def initialize_wireguard_config():
-    Path(settings.wireguard_config_dir).mkdir(
-        parents=True, exist_ok=True
-    )
+    Path(settings.wireguard_config_dir).mkdir(parents=True, exist_ok=True)
     try:
         guild_conf = WGConfig(settings.wireguard_config_filepath)
     except PermissionError as e:
@@ -67,7 +65,9 @@ def start_wireguard():
 
 
 def stop_wireguard():
-    proc_str = "wg-quick down {0}".format(shlex.quote(settings.wireguard_config_filepath))
+    proc_str = "wg-quick down {0}".format(
+        shlex.quote(settings.wireguard_config_filepath)
+    )
     try:
         subprocess.run(  # nosec B602
             proc_str, shell=True, executable="/bin/bash", check=True
@@ -77,7 +77,9 @@ def stop_wireguard():
 
 
 def hot_reload_wgconf():
-    proc_str = "wg syncconf {0} <(wg-quick strip {0})".format(shlex.quote(settings.wireguard_config_filepath))
+    proc_str = "wg syncconf {0} <(wg-quick strip {0})".format(
+        shlex.quote(settings.wireguard_config_filepath)
+    )
     try:
         subprocess.run(  # nosec B602
             proc_str, shell=True, executable="/bin/bash", check=True

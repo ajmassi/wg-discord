@@ -70,14 +70,21 @@ class Settings(BaseSettings):
 
     @root_validator(pre=True)
     def set_wireguard_config_filepath(cls, values: dict) -> dict:  # noqa: B902
-        values["wireguard_config_filepath"] = str(Path(values.get("wireguard_config_dir"), values.get("wireguard_config_filename")))
+        values["wireguard_config_filepath"] = str(
+            Path(
+                values.get("wireguard_config_dir"),
+                values.get("wireguard_config_filename"),
+            )
+        )
         return values
 
     @root_validator()
     def set_key_pair(cls, values: dict) -> dict:  # noqa: B902
         if not values.get("guild_private_key"):
             if Path(values.get("wireguard_config_filepath")).exists():
-                wg_config = get_wireguard_config(values.get("wireguard_config_filepath"))
+                wg_config = get_wireguard_config(
+                    values.get("wireguard_config_filepath")
+                )
                 values["guild_private_key"] = wg_config.interface.get("PrivateKey")
             else:
                 return values

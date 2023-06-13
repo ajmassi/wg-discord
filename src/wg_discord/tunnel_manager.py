@@ -170,9 +170,7 @@ class TunnelManager:
                 "Add the following lines to your tunnel config below your [Interface]'s PrivateKey:"
             )
             try:
-                with open(
-                    os.path.join(settings.wireguard_config_dir, user_id)
-                ) as f:
+                with open(os.path.join(settings.wireguard_config_dir, user_id)) as f:
                     await ctx.author.send(f.read())
             except PermissionError as e:
                 self.wg_config.del_peer(key)

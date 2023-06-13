@@ -29,9 +29,9 @@ def init_settings():
 
     # Provide new temp file and dir
     os.environ["WIREGUARD_CONFIG_DIR"] = tempfile.TemporaryDirectory().name
-    os.environ["WIREGUARD_CONFIG_FILENAME"] = os.path.basename(tempfile.NamedTemporaryFile(
-        suffix=".conf",
-    ).name)
+    os.environ["WIREGUARD_CONFIG_FILENAME"] = os.path.basename(
+        tempfile.NamedTemporaryFile(suffix=".conf").name
+    )
 
     Path(os.environ["WIREGUARD_CONFIG_DIR"]).mkdir(parents=True, exist_ok=True)
 
