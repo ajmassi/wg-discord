@@ -45,7 +45,6 @@ class Settings(BaseSettings):
     guild_public_key: Optional[constr(strip_whitespace=True)]
 
     # Optional
-    guild_save_config: bool = Field(default=False)
     guild_interface_reserved_network_addresses: Optional[List[IPvAnyNetwork]]
     guild_interface_dns: Optional[List[IPvAnyNetwork]]
     # TODO guild_interface_table:
@@ -61,12 +60,6 @@ class Settings(BaseSettings):
     user_allowed_ips: List[IPvAnyNetwork]
     # Optional
     # TODO user_persistent_keep_alive:
-
-    @validator("guild_save_config", pre=True)
-    def cover_guild_save_config_empty(cls, v):  # noqa: B902
-        if str(v).lower() != "true":
-            return False
-        return v
 
     @root_validator(pre=True)
     def set_wireguard_config_filepath(cls, values: dict) -> dict:  # noqa: B902
