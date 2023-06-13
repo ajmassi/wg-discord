@@ -79,12 +79,10 @@ async def echo(ctx: lightbulb.Context) -> None:
 
 
 def main():
-    if not Path(settings.wireguard_config_path).exists():
+    if not Path(settings.wireguard_config_filepath).exists():
         initialize_wireguard_config()
     else:
         update_wireguard_config_private_key(settings.guild_private_key)
-
-    Path(settings.wireguard_user_config_dir).mkdir(parents=True, exist_ok=True)
 
     start_wireguard()
 

@@ -11,7 +11,7 @@ services:
       - .env
     network_mode: "host"
     volumes:
-      - wg-discord-volume:/etc/wireguard
+      - wg-discord-volume:${WIREGUARD_CONFIG_DIR}
 
 volumes:
   wg-discord-volume:
