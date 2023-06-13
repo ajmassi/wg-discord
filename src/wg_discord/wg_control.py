@@ -1,4 +1,3 @@
-import os
 import shlex
 import subprocess  # nosec B404
 from pathlib import Path
@@ -10,11 +9,9 @@ from wg_discord.settings import get_wireguard_config, settings
 
 
 def initialize_wireguard_config():
-    Path(os.path.dirname(settings.wireguard_config_path)).mkdir(
-        parents=True, exist_ok=True
-    )
+    Path(settings.wireguard_config_dir).mkdir(parents=True, exist_ok=True)
     try:
-        guild_conf = WGConfig(settings.wireguard_config_path)
+        guild_conf = WGConfig(settings.wireguard_config_filepath)
     except PermissionError as e:
         raise e
 
@@ -48,7 +45,7 @@ def update_wireguard_config_private_key(key):
         return
 
     try:
-        guild_conf = get_wireguard_config(settings.wireguard_config_path)
+        guild_conf = get_wireguard_config(settings.wireguard_config_filepath)
     except PermissionError as e:
         raise e
 
@@ -58,8 +55,7 @@ def update_wireguard_config_private_key(key):
 
 
 def start_wireguard():
-    conf_file = os.path.basename(os.path.splitext(settings.wireguard_config_path)[0])
-    proc_str = "wg-quick up {0}".format(shlex.quote(conf_file))
+    proc_str = "wg-quick up {0}".format(shlex.quote(settings.wireguard_config_filepath))
     try:
         subprocess.run(  # nosec B602
             proc_str, shell=True, executable="/bin/bash", check=True
@@ -69,8 +65,9 @@ def start_wireguard():
 
 
 def stop_wireguard():
-    conf_file = os.path.basename(os.path.splitext(settings.wireguard_config_path)[0])
-    proc_str = "wg-quick down {0}".format(shlex.quote(conf_file))
+    proc_str = "wg-quick down {0}".format(
+        shlex.quote(settings.wireguard_config_filepath)
+    )
     try:
         subprocess.run(  # nosec B602
             proc_str, shell=True, executable="/bin/bash", check=True
@@ -80,8 +77,9 @@ def stop_wireguard():
 
 
 def hot_reload_wgconf():
-    conf_file = os.path.basename(os.path.splitext(settings.wireguard_config_path)[0])
-    proc_str = "wg syncconf {0} <(wg-quick strip {0})".format(shlex.quote(conf_file))
+    proc_str = "wg syncconf {0} <(wg-quick strip {0})".format(
+        shlex.quote(settings.wireguard_config_filepath)
+    )
     try:
         subprocess.run(  # nosec B602
             proc_str, shell=True, executable="/bin/bash", check=True

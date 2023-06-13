@@ -19,7 +19,7 @@ class ConfigGenError(Exception):
 
 class TunnelManager:
     def __init__(self):
-        self.wg_config = get_wireguard_config(settings.wireguard_config_path)
+        self.wg_config = get_wireguard_config(settings.wireguard_config_filename)
 
     def get_an_available_ip(self) -> ipaddress.IPv4Address | ipaddress.IPv6Address:
         """
@@ -59,7 +59,7 @@ class TunnelManager:
         :param user_address: IP address assigned to the user
         :return None:
         """
-        wg_conf_filepath = os.path.join(settings.wireguard_user_config_dir, user_id)
+        wg_conf_filepath = os.path.join(settings.wireguard_config_dir, user_id)
         try:
             user_conf = WGConfig(wg_conf_filepath)
         except PermissionError as e:
@@ -170,9 +170,7 @@ class TunnelManager:
                 "Add the following lines to your tunnel config below your [Interface]'s PrivateKey:"
             )
             try:
-                with open(
-                    os.path.join(settings.wireguard_user_config_dir, user_id)
-                ) as f:
+                with open(os.path.join(settings.wireguard_config_dir, user_id)) as f:
                     await ctx.author.send(f.read())
             except PermissionError as e:
                 self.wg_config.del_peer(key)

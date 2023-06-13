@@ -44,8 +44,8 @@ The following are configuration items must be set to properly start:
 | Name | WG Mapping | Description |
 | --- | --- | --- |
 | BOT_TOKEN |  | Your bot's Discord token |
-| WIREGUARD_CONFIG_PATH |  | File path for WireGuard config file (ex. `/etc/wireguard/wg0.conf`) |
-| WIREGUARD_USER_CONFIG_DIR |  | Directory path for storing user configurations (ex. `/etc/wireguard/`) |
+| WIREGUARD_CONFIG_FILENAME |  | File name for WireGuard config file (ex. `wg0.conf`) |
+| WIREGUARD_CONFIG_DIR |  | Directory path for storing WG configurations (default: `/etc/wireguard/`) |
 | GUILD_PRIVATE_KEY | PrivateKey | WireGuard private key to be used on the application interface |
 | GUILD_IP_INTERFACE | Address | CIDR address that defines both the app's IP and IP range assignable to users |
 | GUILD_INTERFACE_LISTEN_PORT | ListenPort | Port that WireGuard will listen on |

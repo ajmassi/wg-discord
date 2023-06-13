@@ -1,5 +1,6 @@
 import os
 import tempfile
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -27,10 +28,17 @@ def init_settings():
     load_dotenv("./tests/test.env", override=True)
 
     # Provide new temp file and dir
-    os.environ["WIREGUARD_CONFIG_PATH"] = tempfile.NamedTemporaryFile(
-        suffix=".conf"
-    ).name
-    os.environ["WIREGUARD_USER_CONFIG_DIR"] = tempfile.TemporaryDirectory().name
+    os.environ["WIREGUARD_CONFIG_DIR"] = tempfile.TemporaryDirectory().name
+    os.environ["WIREGUARD_CONFIG_FILENAME"] = os.path.basename(
+        tempfile.NamedTemporaryFile(suffix=".conf").name
+    )
+
+    Path(os.environ["WIREGUARD_CONFIG_DIR"]).mkdir(parents=True, exist_ok=True)
 
     # Re-read and validate environment variables
     settings.__init__()
+
+    yield
+
+    Path(settings.wireguard_config_filepath).unlink()
+    Path(settings.wireguard_config_dir).rmdir()
