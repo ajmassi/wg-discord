@@ -12,6 +12,7 @@ from wg_discord import tunnel_manager
 from wg_discord.settings import settings
 from wg_discord.wg_control import (
     initialize_wireguard_config,
+    is_wg_running,
     start_wireguard,
     stop_wireguard,
     update_wireguard_config_private_key,
@@ -79,6 +80,12 @@ async def echo(ctx: lightbulb.Context) -> None:
 
 
 def main():
+    if is_wg_running():
+        log.error(
+            "WireGuard appears to already be running (checked using 'wg'), stop other WireGuard instance and restart"
+        )
+        exit()
+
     if not Path(settings.wireguard_config_filepath).exists():
         initialize_wireguard_config()
     else:
