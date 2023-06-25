@@ -8,6 +8,11 @@ from wgconfig.wgexec import generate_keypair
 from wg_discord.settings import get_wireguard_config, settings
 
 
+def is_wg_running():
+    wg_output = subprocess.run(["wg"], capture_output=True)
+    return bool(wg_output.stdout)
+
+
 def initialize_wireguard_config():
     Path(settings.wireguard_config_dir).mkdir(parents=True, exist_ok=True)
     try:
