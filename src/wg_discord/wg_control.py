@@ -9,7 +9,7 @@ from wg_discord.settings import get_wireguard_config, settings
 
 
 def is_wg_running():
-    wg_output = subprocess.run(["wg"], capture_output=True)
+    wg_output = subprocess.run(["/usr/bin/wg"], capture_output=True)  # nosec B603
     return bool(wg_output.stdout)
 
 
@@ -60,7 +60,7 @@ def update_wireguard_config_private_key(key):
 
 
 def start_wireguard():
-    proc_str = "wg-quick up {0}".format(shlex.quote(settings.wireguard_config_filepath))
+    proc_str = "/usr/bin/wg-quick up {0}".format(shlex.quote(settings.wireguard_config_filepath))
     try:
         subprocess.run(  # nosec B602
             proc_str, shell=True, executable="/bin/bash", check=True
@@ -70,7 +70,7 @@ def start_wireguard():
 
 
 def stop_wireguard():
-    proc_str = "wg-quick down {0}".format(
+    proc_str = "/usr/bin/wg-quick down {0}".format(
         shlex.quote(settings.wireguard_config_filepath)
     )
     try:
@@ -82,7 +82,7 @@ def stop_wireguard():
 
 
 def hot_reload_wgconf():
-    proc_str = "wg syncconf {0} <(wg-quick strip {0})".format(
+    proc_str = "/usr/bin/wg syncconf {0} <(wg-quick strip {0})".format(
         shlex.quote(settings.wireguard_config_filepath)
     )
     try:
