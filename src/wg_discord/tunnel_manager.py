@@ -85,11 +85,11 @@ class TunnelManager:
             wg.writelines(contents[1:])
         log.info(f"Wrote conf file for {user_id}")
 
-    async def verify_registered_key(
+    async def verify_user_owns_key(
         self, ctx: lightbulb.Context, user_id: str, key: str
     ) -> bool:
         """
-        Verify that a registered key belongs to the requesting user.
+        Verify that <key> belongs to <user>.
         We don't want a user to be able to take over an existing connection.
 
         :param ctx: Discord context used to send messages to user
@@ -131,10 +131,10 @@ class TunnelManager:
         :return None:
         """
         if key in self.wg_config.peers:
-            key_is_approved = await self.verify_registered_key(ctx, user_id, key)
+            key_is_approved = await self.verify_user_owns_key(ctx, user_id, key)
         else:
             # Remove previous user peer configuration and create new one
-            #   Don't necessarily need this if a robust timeout was implemented for keys, but this does prevent clutter
+            #   Don't necessarily need this if a robust timeout is implemented for keys, but this does prevent clutter
             for peer_entry, peer_conf in self.wg_config.peers.items():
                 if peer_conf.get("_rawdata")[0][1::] == user_id:
                     self.wg_config.del_peer(peer_entry)
