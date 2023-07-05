@@ -1,6 +1,5 @@
 import ipaddress
 import logging
-import os
 import subprocess  # nosec B404
 from pathlib import Path
 
@@ -61,7 +60,7 @@ class TunnelManager:
         :param user_address: IP address assigned to the user
         :return None:
         """
-        wg_conf_filepath = os.path.join(settings.wireguard_config_dir, user_id)
+        wg_conf_filepath = Path(settings.wireguard_config_dir) / user_id
         try:
             user_conf = WGConfig(wg_conf_filepath)
         except PermissionError as e:
@@ -178,7 +177,7 @@ class TunnelManager:
                 Add the following lines to your tunnel config below your [Interface]'s PrivateKey:"
             )
             try:
-                with open(os.path.join(settings.wireguard_config_dir, user_id)) as f:
+                with open(Path(settings.wireguard_config_dir) / user_id) as f:
                     await ctx.author.send(f.read())
             except PermissionError as e:
                 self.wg_config.del_peer(key)

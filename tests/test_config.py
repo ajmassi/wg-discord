@@ -1,5 +1,6 @@
 import inspect
 import os
+from pathlib import Path
 
 import pytest
 import wgconfig
@@ -64,7 +65,7 @@ def test_key_init_privkey_no_conf_no():
     """
     ### Setup ###
     # Check file does not exist yet
-    assert not os.path.isfile(settings.wireguard_config_filepath)
+    assert not Path(settings.wireguard_config_filepath).is_file()
 
     # Force re-read and validation of settings
     settings.__init__()
@@ -75,7 +76,7 @@ def test_key_init_privkey_no_conf_no():
         main()
 
     # Check that file created and has key set correctly
-    assert os.path.isfile(settings.wireguard_config_filepath)
+    assert Path(settings.wireguard_config_filepath).is_file()
     wg_config = get_wireguard_config(settings.wireguard_config_filepath)
     assert wg_config.interface["PrivateKey"] == settings.guild_private_key
 
@@ -126,7 +127,7 @@ def test_key_init_privkey_yes_conf_no():
     """
     ### Setup ###
     # Check file does not exist yet
-    assert not os.path.isfile(settings.wireguard_config_filepath)
+    assert not Path(settings.wireguard_config_filepath).is_file()
 
     # Create random new private key for settings
     test_key = wgconfig.wgexec.generate_privatekey()
@@ -140,7 +141,7 @@ def test_key_init_privkey_yes_conf_no():
         main()
 
     # Check that file created and has key set correctly
-    assert os.path.isfile(settings.wireguard_config_filepath)
+    assert Path(settings.wireguard_config_filepath).is_file()
     wg_config = get_wireguard_config(settings.wireguard_config_filepath)
     assert wg_config.interface["PrivateKey"] == settings.guild_private_key
     assert settings.guild_public_key == wgconfig.wgexec.get_publickey(test_key)
