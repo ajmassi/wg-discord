@@ -1,6 +1,8 @@
 import ipaddress
 import logging
 import os
+import subprocess  # nosec B404
+from pathlib import Path
 
 import lightbulb
 from wgconfig import WGConfig
@@ -134,9 +136,11 @@ class TunnelManager:
             key_is_approved = await self.verify_user_owns_key(ctx, user_id, key)
         else:
             # Remove previous user peer configuration and create new one
-            #   Don't necessarily need this if a robust timeout is implemented for keys, but this does prevent clutter
             for peer_entry, peer_conf in self.wg_config.peers.items():
                 if peer_conf.get("_rawdata")[0][1::] == user_id:
+                    # Remove IP from route table
+                    subprocess.run(f"ip route delete {peer_conf.get('AllowedIPs')} dev {Path(settings.wireguard_config_filename).stem}")
+
                     self.wg_config.del_peer(peer_entry)
                     break
 
@@ -161,13 +165,17 @@ class TunnelManager:
                 await ctx.author.send("ERROR: Unable to retrieve your configuration.")
                 log.error(e)
                 return
+            
+            # Update host route table with new IP
+            subprocess.run(f"ip route add {user_address} dev {Path(settings.wireguard_config_filename).stem}")
 
             key_is_approved = True
 
         if key_is_approved:
             hot_reload_wgconf()
             await ctx.author.send(
-                "Add the following lines to your tunnel config below your [Interface]'s PrivateKey:"
+                "Key registration successful!\n\
+                Add the following lines to your tunnel config below your [Interface]'s PrivateKey:"
             )
             try:
                 with open(os.path.join(settings.wireguard_config_dir, user_id)) as f:
