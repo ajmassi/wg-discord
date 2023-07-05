@@ -21,7 +21,7 @@ class ConfigGenError(Exception):
 
 class TunnelManager:
     def __init__(self):
-        self.wg_config = get_wireguard_config(settings.wireguard_config_filename)
+        self.wg_config = get_wireguard_config(settings.wireguard_config_filepath)
 
     def get_an_available_ip(self) -> ipaddress.IPv4Address | ipaddress.IPv6Address:
         """
