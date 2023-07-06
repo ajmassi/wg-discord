@@ -23,6 +23,18 @@ class TunnelManager:
     def __init__(self):
         self.wg_config = get_wireguard_config(settings.wireguard_config_filepath)
 
+    def get_claimed_ips(self) -> set[ipaddress.ip_address]:
+        """
+        Collect IPs defined in WireGuard settings
+
+        :return set[ipaddress.ip_address]: all currently assigned IPs
+        """
+        claimed_ips = set()
+        for _, v in self.wg_config.peers.items():
+            claimed_ips.update(ipaddress.ip_network(v.get("AllowedIPs")).hosts())
+
+        return claimed_ips
+
     def get_an_available_ip(self) -> ipaddress.IPv4Address | ipaddress.IPv6Address:
         """
         Calculates and returns an available IP address.
@@ -33,15 +45,10 @@ class TunnelManager:
             *[set(x) for x in settings.guild_interface_reserved_network_addresses]
         )
 
-        # Collect IPs defined in WireGuard settings
-        claimed_ips = set()
-        for _, v in self.wg_config.peers.items():
-            claimed_ips.update(ipaddress.ip_network(v.get("AllowedIPs")).hosts())
-
         available_ips = (
             set(settings.guild_ip_interface.network.hosts())
             - reserved_ips
-            - claimed_ips
+            - self.get_claimed_ips()
         )
 
         if not available_ips:
