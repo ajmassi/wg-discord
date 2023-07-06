@@ -23,11 +23,11 @@ class TunnelManager:
     def __init__(self):
         self.wg_config = get_wireguard_config(settings.wireguard_config_filepath)
 
-    def get_claimed_ips(self) -> set[ipaddress.ip_address]:
+    def get_claimed_ips(self) -> set[ipaddress.IPv4Address | ipaddress.IPv6Address]:
         """
         Collect IPs defined in WireGuard settings
 
-        :return set[ipaddress.ip_address]: all currently assigned IPs
+        :return set[ipaddress.IPv4Address | ipaddress.IPv6Address]: all currently assigned IPs
         """
         claimed_ips = set()
         for _, v in self.wg_config.peers.items():
