@@ -1,5 +1,6 @@
 import ipaddress
 import logging
+import shlex
 import subprocess  # nosec B404
 from pathlib import Path
 
@@ -138,7 +139,11 @@ class TunnelManager:
             for peer_entry, peer_conf in self.wg_config.peers.items():
                 if peer_conf.get("_rawdata")[0][1::] == user_id:
                     # Remove IP from route table
-                    subprocess.run(f"ip route delete {peer_conf.get('AllowedIPs')} dev {Path(settings.wireguard_config_filename).stem}")
+                    subprocess.run(
+                        shlex.split(
+                            f"/sbin/ip route delete {shlex.quote(peer_conf.get('AllowedIPs'))} dev {shlex.quote(Path(settings.wireguard_config_filename).stem)}"
+                        )
+                    )  # nosec B603
 
                     self.wg_config.del_peer(peer_entry)
                     break
@@ -164,9 +169,13 @@ class TunnelManager:
                 await ctx.author.send("ERROR: Unable to retrieve your configuration.")
                 log.error(e)
                 return
-            
+
             # Update host route table with new IP
-            subprocess.run(f"ip route add {user_address} dev {Path(settings.wireguard_config_filename).stem}")
+            subprocess.run(
+                shlex.split(
+                    f"/sbin/ip route add {user_address} dev {shlex.quote(Path(settings.wireguard_config_filename).stem)}"
+                )
+            )  # nosec B603
 
             key_is_approved = True
 

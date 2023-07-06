@@ -60,7 +60,9 @@ def update_wireguard_config_private_key(key):
 
 
 def start_wireguard():
-    proc_str = "/usr/bin/wg-quick up {0}".format(shlex.quote(settings.wireguard_config_filepath))
+    proc_str = "/usr/bin/wg-quick up {0}".format(
+        shlex.quote(settings.wireguard_config_filepath)
+    )
     try:
         subprocess.run(  # nosec B602
             proc_str, shell=True, executable="/bin/bash", check=True
@@ -82,8 +84,9 @@ def stop_wireguard():
 
 
 def hot_reload_wgconf():
-    proc_str = "/usr/bin/wg syncconf {0} <(wg-quick strip {0})".format(
-        shlex.quote(settings.wireguard_config_filepath)
+    proc_str = "/usr/bin/wg syncconf {0} <(wg-quick strip {1})".format(
+        shlex.quote(Path(settings.wireguard_config_filename).stem),
+        shlex.quote(settings.wireguard_config_filepath),
     )
     try:
         subprocess.run(  # nosec B602
