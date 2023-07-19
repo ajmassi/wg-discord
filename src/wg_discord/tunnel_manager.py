@@ -1,6 +1,8 @@
 import ipaddress
 import logging
-import os
+import shlex
+import subprocess  # nosec B404
+from pathlib import Path
 
 import lightbulb
 from wgconfig import WGConfig
@@ -19,7 +21,19 @@ class ConfigGenError(Exception):
 
 class TunnelManager:
     def __init__(self):
-        self.wg_config = get_wireguard_config(settings.wireguard_config_filename)
+        self.wg_config = get_wireguard_config(settings.wireguard_config_filepath)
+
+    def get_claimed_ips(self) -> set[ipaddress.IPv4Address | ipaddress.IPv6Address]:
+        """
+        Collect IPs defined in WireGuard settings
+
+        :return set[ipaddress.IPv4Address | ipaddress.IPv6Address]: all currently assigned IPs
+        """
+        claimed_ips = set()
+        for _, v in self.wg_config.peers.items():
+            claimed_ips.update(ipaddress.ip_network(v.get("AllowedIPs")).hosts())
+
+        return claimed_ips
 
     def get_an_available_ip(self) -> ipaddress.IPv4Address | ipaddress.IPv6Address:
         """
@@ -31,15 +45,10 @@ class TunnelManager:
             *[set(x) for x in settings.guild_interface_reserved_network_addresses]
         )
 
-        # Collect IPs defined in WireGuard settings
-        claimed_ips = set()
-        for _, v in self.wg_config.peers.items():
-            claimed_ips.update(ipaddress.ip_network(v.get("AllowedIPs")).hosts())
-
         available_ips = (
             set(settings.guild_ip_interface.network.hosts())
             - reserved_ips
-            - claimed_ips
+            - self.get_claimed_ips()
         )
 
         if not available_ips:
@@ -59,7 +68,7 @@ class TunnelManager:
         :param user_address: IP address assigned to the user
         :return None:
         """
-        wg_conf_filepath = os.path.join(settings.wireguard_config_dir, user_id)
+        wg_conf_filepath = Path(settings.wireguard_config_dir) / user_id
         try:
             user_conf = WGConfig(wg_conf_filepath)
         except PermissionError as e:
@@ -85,11 +94,11 @@ class TunnelManager:
             wg.writelines(contents[1:])
         log.info(f"Wrote conf file for {user_id}")
 
-    async def verify_registered_key(
+    async def verify_user_owns_key(
         self, ctx: lightbulb.Context, user_id: str, key: str
     ) -> bool:
         """
-        Verify that a registered key belongs to the requesting user.
+        Verify that <key> belongs to <user>.
         We don't want a user to be able to take over an existing connection.
 
         :param ctx: Discord context used to send messages to user
@@ -131,12 +140,18 @@ class TunnelManager:
         :return None:
         """
         if key in self.wg_config.peers:
-            key_is_approved = await self.verify_registered_key(ctx, user_id, key)
+            key_is_approved = await self.verify_user_owns_key(ctx, user_id, key)
         else:
             # Remove previous user peer configuration and create new one
-            #   Don't necessarily need this if a robust timeout was implemented for keys, but this does prevent clutter
             for peer_entry, peer_conf in self.wg_config.peers.items():
                 if peer_conf.get("_rawdata")[0][1::] == user_id:
+                    # Remove IP from route table
+                    subprocess.run(
+                        shlex.split(
+                            f"/sbin/ip route delete {shlex.quote(peer_conf.get('AllowedIPs'))} dev {shlex.quote(Path(settings.wireguard_config_filename).stem)}"
+                        )
+                    )  # nosec B603
+
                     self.wg_config.del_peer(peer_entry)
                     break
 
@@ -162,15 +177,23 @@ class TunnelManager:
                 log.error(e)
                 return
 
+            # Update host route table with new IP
+            subprocess.run(
+                shlex.split(
+                    f"/sbin/ip route add {user_address} dev {shlex.quote(Path(settings.wireguard_config_filename).stem)}"
+                )
+            )  # nosec B603
+
             key_is_approved = True
 
         if key_is_approved:
             hot_reload_wgconf()
             await ctx.author.send(
-                "Add the following lines to your tunnel config below your [Interface]'s PrivateKey:"
+                "Key registration successful!\n\
+                Add the following lines to your tunnel config below your [Interface]'s PrivateKey:"
             )
             try:
-                with open(os.path.join(settings.wireguard_config_dir, user_id)) as f:
+                with open(Path(settings.wireguard_config_dir) / user_id) as f:
                     await ctx.author.send(f.read())
             except PermissionError as e:
                 self.wg_config.del_peer(key)
